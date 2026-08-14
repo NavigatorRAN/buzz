@@ -11,6 +11,12 @@ const finding = {
   sourceIds: ["ledger-1"],
 };
 
+const decisionFinding = {
+  classification: "OFFICIAL",
+  text: "Prepare a workspace checklist proposal.",
+  sourceIds: ["ledger-1"],
+};
+
 const sectionKeys = [
   "today",
   "operations",
@@ -25,7 +31,12 @@ const sectionKeys = [
   "sources",
 ] as const;
 
-const sections = Object.fromEntries(sectionKeys.map((key) => [key, [finding]]));
+const sections = Object.fromEntries(
+  sectionKeys.map((key) => [
+    key,
+    key === "decisions" ? [decisionFinding] : [finding],
+  ]),
+);
 
 const contributions = [
   ["operations", "operations"],
@@ -50,6 +61,7 @@ const contributions = [
       actionId: `action-${index}`,
       text: "Prepare a workspace checklist proposal.",
       approvalState: "pending",
+      sourceIds: ["ledger-1"],
     },
   ],
 }));

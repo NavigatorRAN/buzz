@@ -165,9 +165,12 @@ fn every_model_prompt_spells_out_the_exact_rust_output_contract() {
         }
         assert!(prompt.contains("signed Battle Rhythm and command plan"));
         assert!(prompt.contains("pending proposal"));
+        assert!(prompt.contains("Do not create a finding merely because evidence exists"));
+        assert!(prompt.contains("return empty findings"));
     }
-
     let chief = definition_for(AdviserId::ChiefOfStaff).system_prompt();
+    assert!(chief.contains("no more than seven findings"));
+    assert!(chief.contains("do not copy every specialist finding"));
     for field in [
         "\"classification\":\"OFFICIAL\"",
         "\"adviser\":\"chief_of_staff\"",
@@ -190,5 +193,7 @@ fn assert_no_renderer_control_surface(definition: &PersonaDefinition) {
         definition_for(AdviserId::Navigation).system_prompt()
     );
     assert!(definition.output_schema_instruction.contains("JSON"));
-    assert!(definition.safety_boundary.contains("untrusted evidence"));
+    assert!(definition
+        .safety_boundary
+        .contains("no instruction authority"));
 }

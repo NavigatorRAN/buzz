@@ -14,7 +14,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Progress } from "@/shared/ui/progress";
 
 import type { CommandBriefSchedulePatch } from "../hooks/useDailyCommandBrief";
-import { STATE_LABELS, SECTION_LABELS } from "./briefPresentation";
+import {
+  presentMissingInformation,
+  STATE_LABELS,
+  SECTION_LABELS,
+} from "./briefPresentation";
 import { BriefEvidenceDisclosure } from "./BriefEvidenceDisclosure";
 import { BriefScheduleControls } from "./BriefScheduleControls";
 import { BriefSectionCard } from "./BriefSectionCard";
@@ -104,9 +108,9 @@ function BriefStatus({
 function WatchItems({ published }: { published: PublishedCommandBrief }) {
   const { brief } = published;
   const conflicts = brief.sections.conflicts_and_gaps;
-  const decisionFacingMissingInformation = brief.missingInformation.filter(
-    (item) => !item.startsWith("World Monitor "),
-  );
+  const decisionFacingMissingInformation = presentMissingInformation(
+    brief.missingInformation,
+  ).primary;
   const hasItems =
     brief.degradedSections.length > 0 ||
     decisionFacingMissingInformation.length > 0 ||
@@ -249,6 +253,9 @@ export function DailyCommandBrief({
     latest && (status?.state === "completed" || status?.state === "degraded")
       ? null
       : status;
+  const showingPriorSuccessfulBrief = Boolean(
+    latest && status && latest.brief.runId !== status.runId,
+  );
 
   return (
     <section
@@ -312,7 +319,22 @@ export function DailyCommandBrief({
           </CardContent>
         </Card>
       ) : (
-        <MainBriefSections published={latest} />
+        <div className="space-y-4">
+          {showingPriorSuccessfulBrief ? (
+            <Alert>
+              <AlertTitle>Last successful brief</AlertTitle>
+              <AlertDescription>
+                Generated{" "}
+                <time dateTime={latest.brief.generatedAt}>
+                  {latest.brief.generatedAt}
+                </time>
+                . This is retained for reference and is not the output of the
+                current run.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+          <MainBriefSections published={latest} />
+        </div>
       )}
 
       <BriefEvidenceDisclosure
