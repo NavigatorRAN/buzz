@@ -357,6 +357,7 @@ fn concise_chief_synthesis_and_source_bound_decisions_survive_the_wire_contract(
         "classification": "OFFICIAL",
         "actionId": "review-readiness",
         "text": "Review the readiness constraint.",
+        "alternativeText": "Maintain the current posture and review it tomorrow.",
         "approvalState": "pending",
         "sourceIds": ["ledger-1"]
     }]);

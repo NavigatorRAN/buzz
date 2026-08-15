@@ -154,6 +154,8 @@ struct RawProposal {
     classification: OfficialClassification,
     action_id: String,
     text: String,
+    #[serde(default)]
+    alternative_text: Option<String>,
     approval_state: ApprovalState,
     #[serde(default)]
     source_ids: Vec<String>,
@@ -316,6 +318,10 @@ fn validate_command_brief(raw: &RawCommandBrief) -> Result<(), ()> {
             };
             if !valid_text(&proposal.action_id)
                 || !valid_text(&proposal.text)
+                || proposal
+                    .alternative_text
+                    .as_deref()
+                    .is_some_and(|alternative| !valid_text(alternative))
                 || proposal_source_ids.is_empty()
                 || !valid_unique_text_array(&proposal_source_ids, MAX_ARRAY_ITEMS)
                 || proposal_source_ids
