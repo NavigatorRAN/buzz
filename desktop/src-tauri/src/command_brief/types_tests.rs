@@ -389,6 +389,7 @@ fn pending_proposals_populate_only_source_bound_decisions_and_old_briefs_remain_
         "classification": "OFFICIAL",
         "actionId": "action-1",
         "text": "Review the readiness constraint.",
+        "alternativeText": "Maintain the current readiness posture and review it tomorrow.",
         "approvalState": "pending",
         "sourceIds": ["ledger-1"]
     });
@@ -396,6 +397,16 @@ fn pending_proposals_populate_only_source_bound_decisions_and_old_briefs_remain_
     brief["contributions"][0]["proposedActions"] = json!([proposal]);
     brief["sections"]["decisions"] = json!([finding("Review the readiness constraint.")]);
     assert!(parse(brief).is_ok());
+
+    let mut prior_source_bound = brief_value();
+    prior_source_bound["contributions"][0]["proposedActions"] = json!([{
+        "classification": "OFFICIAL",
+        "actionId": "action-without-alternative",
+        "text": "Review the readiness constraint.",
+        "approvalState": "pending",
+        "sourceIds": ["ledger-1"]
+    }]);
+    assert!(parse(prior_source_bound).is_ok());
 
     let mut unsupported = brief_value();
     unsupported["sections"]["decisions"] = json!([finding("Invented decision.")]);
@@ -409,7 +420,11 @@ fn pending_proposals_populate_only_source_bound_decisions_and_old_briefs_remain_
         "approvalState": "pending"
     }]);
     historical["sections"]["decisions"] = json!([]);
-    assert!(parse(historical).is_ok());
+    let historical = parse(historical).expect("historical brief remains readable");
+    let historical_value = serde_json::to_value(historical).expect("serialize historical brief");
+    assert!(historical_value["contributions"][0]["proposedActions"][0]
+        .get("alternativeText")
+        .is_none());
 }
 
 #[test]

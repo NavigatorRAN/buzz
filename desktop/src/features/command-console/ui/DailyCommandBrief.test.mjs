@@ -11,6 +11,11 @@ const finding = {
   text: "Review the verified priority.",
   sourceIds: ["ledger-1"],
 };
+const decisionFinding = {
+  classification: "OFFICIAL",
+  text: "Prepare a workspace checklist proposal.",
+  sourceIds: ["ledger-1"],
+};
 const advisers = [
   ["operations", "operations"],
   ["intelligence", "intelligence"],
@@ -32,7 +37,16 @@ const advisers = [
     {
       classification: "OFFICIAL",
       actionId: `action-${index}`,
-      text: "Prepare a workspace checklist proposal.",
+      text:
+        index === 0
+          ? "Prepare a workspace checklist proposal."
+          : `Prepare adviser proposal ${index}.`,
+      ...(index === 0
+        ? {
+            alternativeText:
+              "Defer the checklist until tomorrow and retain the current posture.",
+          }
+        : {}),
       approvalState: "pending",
       sourceIds: ["ledger-1"],
     },
@@ -53,6 +67,7 @@ const sectionKeys = [
   "sources",
 ];
 const sections = Object.fromEntries(sectionKeys.map((key) => [key, [finding]]));
+sections.decisions = [decisionFinding];
 const published = {
   classification: "OFFICIAL",
   lifecycleAuditEventId: "event-1",
@@ -366,6 +381,23 @@ test("renders a decision-first brief with supporting evidence collapsed after co
     /World Monitor regional update/,
   );
   assert.doesNotMatch(html, /approve|execute action/i);
+});
+
+test("renders concise actionable decisions with two COAs and user direction", () => {
+  const html = render({ latest: published });
+  const disclosure = html.indexOf('data-testid="brief-evidence-disclosure"');
+  const commandContent = html.slice(0, disclosure);
+
+  assert.match(commandContent, /COA A — Recommended/);
+  assert.match(commandContent, /Prepare a workspace checklist proposal/);
+  assert.match(commandContent, /COA B — Alternative/);
+  assert.match(commandContent, /Defer the checklist until tomorrow/);
+  assert.match(commandContent, />Direct COA A</);
+  assert.match(commandContent, />Direct COA B</);
+  assert.match(commandContent, />Issue direction</);
+  assert.match(commandContent, /spellCheck="true"/);
+  assert.match(commandContent, /keyboard microphone or macOS Dictation/i);
+  assert.doesNotMatch(commandContent, /ledger-1|source-1|Source ledger/);
 });
 
 test("restart view derives prominent degraded status and exact section labels from the immutable brief", () => {

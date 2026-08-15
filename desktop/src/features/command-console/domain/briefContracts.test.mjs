@@ -239,12 +239,36 @@ test("accepts source-bound decisions and derives citations for historical pendin
       classification: "OFFICIAL",
       actionId: "review-readiness",
       text: "Review the readiness constraint.",
+      alternativeText:
+        "Maintain the current readiness posture and review it tomorrow.",
       approvalState: "pending",
       sourceIds: ["ledger-1"],
     },
   ];
   current.sections.decisions = [finding("Review the readiness constraint.")];
-  assert.ok(parseCommandBrief(current));
+  const parsedCurrent = parseCommandBrief(current);
+  assert.ok(parsedCurrent);
+  assert.equal(
+    parsedCurrent.contributions[0].proposedActions[0].alternativeText,
+    "Maintain the current readiness posture and review it tomorrow.",
+  );
+
+  const priorSourceBound = brief();
+  priorSourceBound.contributions[0].proposedActions = [
+    {
+      classification: "OFFICIAL",
+      actionId: "missing-alternative",
+      text: "Review the readiness constraint.",
+      approvalState: "pending",
+      sourceIds: ["ledger-1"],
+    },
+  ];
+  const parsedPrior = parseCommandBrief(priorSourceBound);
+  assert.ok(parsedPrior);
+  assert.equal(
+    parsedPrior.contributions[0].proposedActions[0].alternativeText,
+    undefined,
+  );
 
   const historical = brief();
   historical.contributions[0].proposedActions = [
@@ -260,6 +284,10 @@ test("accepts source-bound decisions and derives citations for historical pendin
   assert.deepEqual(parsed.contributions[0].proposedActions[0].sourceIds, [
     "ledger-1",
   ]);
+  assert.equal(
+    parsed.contributions[0].proposedActions[0].alternativeText,
+    undefined,
+  );
 });
 
 test("navigation cannot encode orders or decisions and every brief retains the advisory limitation", () => {

@@ -4,13 +4,15 @@ use serde::{Deserialize, Serialize};
 
 use super::{unique_valid_text_array, valid_text, CitedFinding, Classification, ContractError};
 
-/// A proposal which must remain pending until an explicit external approval flow.
+/// A proposal which remains pending in the immutable brief until the CO directs it.
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PendingProposal {
     classification: Classification,
     action_id: String,
     text: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    alternative_text: Option<String>,
     approval_state: PendingApprovalState,
     source_ids: Vec<String>,
 }
@@ -27,6 +29,8 @@ pub(super) struct RawPendingProposal {
     classification: Classification,
     action_id: String,
     text: String,
+    #[serde(default)]
+    alternative_text: Option<String>,
     approval_state: PendingApprovalState,
     #[serde(default)]
     source_ids: Option<Vec<String>>,
@@ -36,6 +40,11 @@ impl PendingProposal {
     /// Returns the pending action text.
     pub fn text(&self) -> &str {
         &self.text
+    }
+
+    /// Returns the credible alternative course of action when one was supplied.
+    pub fn alternative_text(&self) -> Option<&str> {
+        self.alternative_text.as_deref()
     }
 
     /// Returns the evidence admitted for this pending action.
@@ -67,7 +76,13 @@ pub(super) fn parse_raw_proposals(
     proposals
         .into_iter()
         .map(|proposal| {
-            if !valid_text(&proposal.action_id) || !valid_text(&proposal.text) {
+            if !valid_text(&proposal.action_id)
+                || !valid_text(&proposal.text)
+                || proposal
+                    .alternative_text
+                    .as_deref()
+                    .is_some_and(|alternative| !valid_text(alternative))
+            {
                 return Err(ContractError);
             }
             let mut source_ids = match proposal.source_ids {
@@ -90,6 +105,7 @@ pub(super) fn parse_raw_proposals(
                 classification: proposal.classification,
                 action_id: proposal.action_id,
                 text: proposal.text,
+                alternative_text: proposal.alternative_text,
                 approval_state: proposal.approval_state,
                 source_ids,
             })

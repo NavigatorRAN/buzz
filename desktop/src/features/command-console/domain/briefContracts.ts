@@ -109,6 +109,7 @@ export type AdviserContribution = {
     readonly classification: "OFFICIAL";
     readonly actionId: string;
     readonly text: string;
+    readonly alternativeText?: string;
     readonly approvalState: "pending";
     readonly sourceIds: readonly string[];
   }[];
@@ -365,7 +366,17 @@ function parseContribution(
   const proposedActions =
     [] as AdviserContribution["proposedActions"][number][];
   for (const action of value.proposedActions) {
-    const currentAction =
+    const currentActionWithAlternative =
+      isRecord(action) &&
+      hasExactKeys(action, [
+        "classification",
+        "actionId",
+        "text",
+        "alternativeText",
+        "approvalState",
+        "sourceIds",
+      ]);
+    const priorSourceBoundAction =
       isRecord(action) &&
       hasExactKeys(action, [
         "classification",
@@ -384,29 +395,39 @@ function parseContribution(
       ]);
     if (
       !isRecord(action) ||
-      (!currentAction && !historicalAction) ||
+      (!currentActionWithAlternative &&
+        !priorSourceBoundAction &&
+        !historicalAction) ||
       action.classification !== "OFFICIAL" ||
       !isBoundedText(action.actionId) ||
       !isBoundedText(action.text) ||
+      (currentActionWithAlternative &&
+        !isBoundedText(action.alternativeText)) ||
       action.approvalState !== "pending"
     )
       return null;
-    const actionSourceIds = currentAction
-      ? parseTextArray(action.sourceIds, true)
-      : Object.freeze([
-          ...new Set(findings.flatMap((finding) => [...finding.sourceIds])),
-        ]);
+    const actionSourceIds =
+      currentActionWithAlternative || priorSourceBoundAction
+        ? parseTextArray(action.sourceIds, true)
+        : Object.freeze([
+            ...new Set(findings.flatMap((finding) => [...finding.sourceIds])),
+          ]);
     if (
       !actionSourceIds ||
       actionSourceIds.length === 0 ||
       actionSourceIds.some((id) => !sourceIds.has(id))
     )
       return null;
+    const alternativeText =
+      currentActionWithAlternative && typeof action.alternativeText === "string"
+        ? action.alternativeText
+        : undefined;
     proposedActions.push(
       Object.freeze({
         classification: action.classification,
         actionId: action.actionId,
         text: action.text,
+        ...(alternativeText ? { alternativeText } : {}),
         approvalState: "pending",
         sourceIds: Object.freeze([...actionSourceIds].sort()),
       }),

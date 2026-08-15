@@ -6,6 +6,7 @@ import type {
   BriefSchedule,
   PublishedCommandBrief,
 } from "@/features/command-console/domain/briefContracts";
+import { projectBriefDecisions } from "@/features/command-console/domain/briefDecisions";
 import type { CommandConsoleStatusViewModel } from "@/features/command-console/hooks/useCommandConsoleStatus";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
@@ -20,9 +21,12 @@ import {
   SECTION_LABELS,
 } from "./briefPresentation";
 import { BriefEvidenceDisclosure } from "./BriefEvidenceDisclosure";
+import {
+  type BriefDecisionActions,
+  BriefDecisionSection,
+} from "./BriefDecisionSection";
 import { BriefScheduleControls } from "./BriefScheduleControls";
 import { BriefSectionCard } from "./BriefSectionCard";
-import { SourceCitationLink } from "./SourceCitationLink";
 
 const PROGRESS: Record<BriefRunState, number | null> = {
   queued: 5,
@@ -152,10 +156,7 @@ function WatchItems({ published }: { published: PublishedCommandBrief }) {
             <ul className="mt-1 list-disc pl-5">
               {conflicts.map((finding) => (
                 <li key={`${finding.text}-${finding.sourceIds.join("-")}`}>
-                  {finding.text}{" "}
-                  {finding.sourceIds.map((sourceId) => (
-                    <SourceCitationLink key={sourceId} sourceId={sourceId} />
-                  ))}
+                  {finding.text}
                 </li>
               ))}
             </ul>
@@ -177,17 +178,18 @@ function WatchItems({ published }: { published: PublishedCommandBrief }) {
 }
 
 function MainBriefSections({
+  decisionActions,
   published,
 }: {
+  decisionActions?: BriefDecisionActions;
   published: PublishedCommandBrief;
 }) {
   const { brief } = published;
   return (
     <div className="space-y-4" data-testid="brief-main-sections">
-      <BriefSectionCard
-        findings={brief.sections.decisions}
-        prominent
-        section="decisions"
+      <BriefDecisionSection
+        actions={decisionActions}
+        decisions={projectBriefDecisions(brief)}
       />
       <BriefSectionCard findings={brief.sections.today} section="today" />
       <WatchItems published={published} />
@@ -234,6 +236,7 @@ export type DailyCommandBriefProps = {
   readonly onGenerate: () => void;
   readonly onCancel: () => void;
   readonly onScheduleChange: (patch: CommandBriefSchedulePatch) => void;
+  readonly decisionActions?: BriefDecisionActions;
 };
 
 export function DailyCommandBrief({
@@ -248,6 +251,7 @@ export function DailyCommandBrief({
   onGenerate,
   onCancel,
   onScheduleChange,
+  decisionActions,
 }: DailyCommandBriefProps) {
   const visibleStatus =
     latest && (status?.state === "completed" || status?.state === "degraded")
@@ -333,7 +337,10 @@ export function DailyCommandBrief({
               </AlertDescription>
             </Alert>
           ) : null}
-          <MainBriefSections published={latest} />
+          <MainBriefSections
+            decisionActions={decisionActions}
+            published={latest}
+          />
         </div>
       )}
 
