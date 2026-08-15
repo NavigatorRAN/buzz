@@ -35,7 +35,7 @@ use tokio_util::sync::CancellationToken;
 // Evidence-backed Qwen advisers can exceed two minutes on Apple Silicon even
 // with native reasoning disabled. Five minutes is the native client's bounded
 // maximum and leaves enough time for one structured contribution to complete.
-const MODEL_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+const MODEL_TIMEOUT: Duration = Duration::from_secs(15 * 60);
 const MODEL_READINESS_POLL_INTERVAL: Duration = Duration::from_secs(15);
 const READINESS_DISPATCH_BACKOFF: Duration = Duration::from_millis(250);
 const COMMAND_BRIEF_POLICY_REVISION: &str = "command-brief-policy-v1";

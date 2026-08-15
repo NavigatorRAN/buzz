@@ -197,6 +197,16 @@ _ensure-sidecar-stubs:
         touch "desktop/src-tauri/binaries/buzz-apple-inputs-${TARGET}"
     fi
 
+# Verify the exact admitted Gemma runtime over a loopback-only LM Studio endpoint.
+check-offline-model report="" endpoint="http://127.0.0.1:1234" model="google/gemma-4-26b-a4b" instance="gemma4-26b-official":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    args=(--endpoint "{{endpoint}}" --model "{{model}}" --instance "{{instance}}")
+    if [[ -n "{{report}}" ]]; then
+      args+=(--report "{{report}}")
+    fi
+    scripts/check-offline-model.sh "${args[@]}"
+
 # Build and copy the read-only macOS Apple-input helper into Tauri's sidecar directory.
 apple-inputs-bundle target="":
     #!/usr/bin/env bash
