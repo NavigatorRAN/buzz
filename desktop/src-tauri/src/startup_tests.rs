@@ -189,6 +189,26 @@ fn trusted_lan_mode_can_reach_cloud_fallback_when_lm_studio_is_unavailable() {
 }
 
 #[test]
+fn ready_offline_admission_routes_generation_to_admitted_instance() {
+    let ready = LmStudioReadiness {
+        status: LmStudioReadinessState::Ready,
+        detail: "ready".to_string(),
+        configured_model: Some("google/gemma-4-26b-a4b".to_string()),
+        loaded_models: vec!["google/gemma-4-26b-a4b".to_string()],
+        security_warnings: Vec::new(),
+        bind_exposure: "loopback",
+        admission: ready_offline_admission(),
+        max_output_tokens: 8_192,
+        generation_capacity: 1,
+    };
+
+    assert_eq!(
+        admitted_model(&ready, false).as_deref(),
+        Some("gemma4-26b-official")
+    );
+}
+
+#[test]
 fn completed_or_started_timer_ticks_take_the_zero_probe_fast_path() {
     for state in ["started", "completed"] {
         let conn = Connection::open_in_memory().expect("memory");

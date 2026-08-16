@@ -77,7 +77,7 @@ pub(crate) fn admitted_model(
             .admission
             .runtime
             .as_ref()
-            .map(|runtime| runtime.model_id.clone());
+            .map(|runtime| runtime.instance_id.clone());
     }
     if trusted_lan_mode {
         readiness
