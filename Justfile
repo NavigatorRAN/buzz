@@ -119,7 +119,7 @@ build-release:
     cargo build --workspace --release
 
 # Run repo lint and formatting checks
-check: fmt-check clippy desktop-check desktop-tauri-fmt-check desktop-tauri-clippy web-check mobile-check check-desktop-release-sidecars
+check: fmt-check clippy desktop-check desktop-tauri-fmt-check desktop-tauri-clippy web-check mobile-check check-desktop-release-sidecars check-offline-model-script
 
 # Format all Rust code
 fmt:
@@ -178,6 +178,10 @@ fix-all: fmt desktop-tauri-fmt desktop-fix web-fix mobile-fix
 # Reject release recipes and staged bundles that can ship placeholder sidecars.
 check-desktop-release-sidecars:
     scripts/tests/verify-desktop-sidecars-test.sh
+
+# Keep the live offline-model canary pinned to the already admitted LM Studio instance.
+check-offline-model-script:
+    scripts/tests/check-offline-model-test.sh
 
 # Ensure sidecar placeholder binaries exist (Tauri validates externalBin at compile time)
 # Sidecar binary list must stay in sync with desktop-release-build below.

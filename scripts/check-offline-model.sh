@@ -49,8 +49,8 @@ fi
 
 request="$work_dir/request.json"
 response="$work_dir/response.json"
-jq -n --arg model "$model" '{
-  model: $model,
+jq -n --arg instance "$instance" '{
+  model: $instance,
   input: "Reply exactly GEMMA64 READY",
   system_prompt: "Follow the user instruction exactly.",
   stream: false,

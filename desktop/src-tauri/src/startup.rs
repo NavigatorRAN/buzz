@@ -130,6 +130,17 @@ impl RuntimeConfigIdentity {
     }
 }
 
+fn qualified_command_brief_capacity(requested_capacity: u8) -> Result<u8, String> {
+    if !matches!(requested_capacity, 1 | 2) {
+        return Err("command brief runtime configuration unavailable".to_string());
+    }
+
+    // The qualified offline Gemma runtime has one resident generation slot.
+    // A legacy schedule may still contain `2`, but production must never
+    // widen the scheduler beyond the admitted runtime.
+    Ok(1)
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct RuntimeReadiness {
     transition_token: String,
@@ -799,12 +810,14 @@ async fn production_preflight(
         return Err(IDENTITY_UNAVAILABLE);
     }
     let apple_identity = format!("{apple_config_id}:{helper_id}:{trusted_lan_identity}");
+    let capacity = qualified_command_brief_capacity(schedule.concurrency())
+        .map_err(|_| "runtime_config_unavailable")?;
     let config = RuntimeConfigIdentity::new(
         &owner_pubkey,
         model,
         snapshot.snapshot_id(),
         &apple_identity,
-        schedule.concurrency(),
+        capacity,
         COMMAND_BRIEF_POLICY_REVISION,
     )
     .map_err(|_| "runtime_config_unavailable")?;

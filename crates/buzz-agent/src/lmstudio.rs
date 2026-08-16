@@ -166,6 +166,7 @@ pub struct LmStudioChatRequest {
     integrations: Vec<EphemeralMcpIntegration>,
     stream: bool,
     reasoning: LmStudioReasoning,
+    temperature: u8,
     max_output_tokens: u32,
     context_length: u64,
     store: bool,
@@ -208,6 +209,7 @@ impl LmStudioChatRequest {
             integrations,
             stream: false,
             reasoning,
+            temperature: 0,
             max_output_tokens,
             context_length,
             store: true,
@@ -515,6 +517,7 @@ mod tests {
                 }],
                 "stream": false,
                 "reasoning": "on",
+                "temperature": 0,
                 "max_output_tokens": MAX_OUTPUT_TOKENS,
                 "context_length": MAX_CONTEXT_TOKENS,
                 "store": true
