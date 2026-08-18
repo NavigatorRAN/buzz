@@ -464,20 +464,19 @@ impl TryFrom<RiskRecordWire> for RiskRecordV1 {
             }
         }
         bounded(&value.residual_assessment.basis, "residual basis", 8_192)?;
-        if value.residual_assessment.state == ResidualAssessmentState::Validated {
-            if value.controls.is_empty()
+        if value.residual_assessment.state == ResidualAssessmentState::Validated
+            && (value.controls.is_empty()
                 || value.controls.iter().any(|control| {
                     control.status != RiskControlStatus::Implemented
                         || control
                             .effectiveness
                             .as_deref()
                             .is_none_or(|item| item.trim().is_empty())
-                })
-            {
-                return Err(
-                    "validated residual risk requires implemented effective controls".to_owned(),
-                );
-            }
+                }))
+        {
+            return Err(
+                "validated residual risk requires implemented effective controls".to_owned(),
+            );
         }
         if matches!(value.status, RiskStatus::Controlled | RiskStatus::Accepted)
             && value.controls.is_empty()
