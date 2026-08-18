@@ -50,7 +50,7 @@ export function PlanDetailScreen({
   const identity = useIdentityQuery();
   const plans = usePlansQuery(identity.data?.pubkey);
   const mutations = usePlanMutations(identity.data?.pubkey ?? "");
-  const { goPlans } = useAppNavigation();
+  const { goPlans, goRisk } = useAppNavigation();
   const project = plans.data?.projects.find((item) => item.id === planId);
   const tasks = React.useMemo(
     () => plans.data?.tasks.filter((task) => task.projectId === planId) ?? [],
@@ -422,6 +422,9 @@ export function PlanDetailScreen({
             setEditingConstraint(constraint);
             setConstraintOpen(true);
           }}
+          onPromoteRisk={(constraint) =>
+            void goRisk({ constraintId: constraint.id })
+          }
           schedule={scheduleValue?.tasks ?? []}
           tasks={tasks}
         />

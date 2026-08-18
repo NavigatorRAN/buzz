@@ -12653,6 +12653,8 @@ export function maybeInstallE2eTauriMocks() {
       case "export_team_snapshot":
         // Mimics the save-to-disk path: report success without a real dialog.
         return true;
+      case "export_risk_register":
+        return true;
       case "encode_team_snapshot_for_send": {
         // Return a minimal PNG-shaped payload so the send flow can proceed
         // through upload_media_bytes without a real Rust encode step.

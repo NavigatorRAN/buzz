@@ -820,6 +820,7 @@ pub fn run() {
             confirm_agent_snapshot_import,
             encode_agent_snapshot_for_send,
             export_team_snapshot,
+            export_risk_register,
             encode_team_snapshot_for_send,
             preview_team_snapshot_import,
             confirm_team_snapshot_import,

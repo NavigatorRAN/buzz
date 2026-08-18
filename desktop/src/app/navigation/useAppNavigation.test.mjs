@@ -129,3 +129,31 @@ test("goPlans navigates to the naval planning route", async () => {
   await appNavigation.goPlans();
   assert.equal(router.state.location.pathname, "/plans");
 });
+
+test("goRisk navigates to the register and carries a source constraint", async () => {
+  let appNavigation = null;
+  function NavigationProbe() {
+    appNavigation = useAppNavigation();
+    return null;
+  }
+  const rootRoute = createRootRoute({ component: NavigationProbe });
+  const indexRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/",
+  });
+  const riskRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/risk",
+    validateSearch: (search) => search,
+  });
+  const router = createRouter({
+    history: createMemoryHistory({ initialEntries: ["/"] }),
+    routeTree: rootRoute.addChildren([indexRoute, riskRoute]),
+  });
+  await router.load();
+  renderToStaticMarkup(React.createElement(RouterProvider, { router }));
+  assert.ok(appNavigation);
+  await appNavigation.goRisk({ constraintId: "constraint-1" });
+  assert.equal(router.state.location.pathname, "/risk");
+  assert.equal(router.state.location.search.constraint, "constraint-1");
+});

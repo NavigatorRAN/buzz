@@ -8,6 +8,7 @@ import { Route as rootRouteImport } from "./routes/root";
 import { Route as workflowsRouteImport } from "./routes/workflows";
 import { Route as shipRouteImport } from "./routes/ship";
 import { Route as settingsRouteImport } from "./routes/settings";
+import { Route as riskRouteImport } from "./routes/risk";
 import { Route as remindersRouteImport } from "./routes/reminders";
 import { Route as pulseRouteImport } from "./routes/pulse";
 import { Route as projectsRouteImport } from "./routes/projects";
@@ -36,6 +37,11 @@ const shipRoute = shipRouteImport.update({
 const settingsRoute = settingsRouteImport.update({
   id: "/settings",
   path: "/settings",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const riskRoute = riskRouteImport.update({
+  id: "/risk",
+  path: "/risk",
   getParentRoute: () => rootRouteImport,
 } as any);
 const remindersRoute = remindersRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   "/projects": typeof projectsRoute;
   "/pulse": typeof pulseRoute;
   "/reminders": typeof remindersRoute;
+  "/risk": typeof riskRoute;
   "/settings": typeof settingsRoute;
   "/ship": typeof shipRoute;
   "/workflows": typeof workflowsRoute;
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   "/projects": typeof projectsRoute;
   "/pulse": typeof pulseRoute;
   "/reminders": typeof remindersRoute;
+  "/risk": typeof riskRoute;
   "/settings": typeof settingsRoute;
   "/ship": typeof shipRoute;
   "/workflows": typeof workflowsRoute;
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   "/projects": typeof projectsRoute;
   "/pulse": typeof pulseRoute;
   "/reminders": typeof remindersRoute;
+  "/risk": typeof riskRoute;
   "/settings": typeof settingsRoute;
   "/ship": typeof shipRoute;
   "/workflows": typeof workflowsRoute;
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | "/projects"
     | "/pulse"
     | "/reminders"
+    | "/risk"
     | "/settings"
     | "/ship"
     | "/workflows"
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | "/projects"
     | "/pulse"
     | "/reminders"
+    | "/risk"
     | "/settings"
     | "/ship"
     | "/workflows"
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | "/projects"
     | "/pulse"
     | "/reminders"
+    | "/risk"
     | "/settings"
     | "/ship"
     | "/workflows"
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   projectsRoute: typeof projectsRoute;
   pulseRoute: typeof pulseRoute;
   remindersRoute: typeof remindersRoute;
+  riskRoute: typeof riskRoute;
   settingsRoute: typeof settingsRoute;
   shipRoute: typeof shipRoute;
   workflowsRoute: typeof workflowsRoute;
@@ -269,6 +282,13 @@ declare module "@tanstack/react-router" {
       path: "/settings";
       fullPath: "/settings";
       preLoaderRoute: typeof settingsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/risk": {
+      id: "/risk";
+      path: "/risk";
+      fullPath: "/risk";
+      preLoaderRoute: typeof riskRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/reminders": {
@@ -381,6 +401,7 @@ const rootRouteChildren: RootRouteChildren = {
   projectsRoute: projectsRoute,
   pulseRoute: pulseRoute,
   remindersRoute: remindersRoute,
+  riskRoute: riskRoute,
   settingsRoute: settingsRoute,
   shipRoute: shipRoute,
   workflowsRoute: workflowsRoute,

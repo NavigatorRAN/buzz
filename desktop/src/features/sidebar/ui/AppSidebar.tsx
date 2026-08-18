@@ -139,6 +139,7 @@ type AppSidebarProps = {
   onSelectBattleRhythm: () => void;
   onSelectCommandConsole: () => void;
   onSelectPlans: () => void;
+  onSelectRisk: () => void;
   onSelectProjects: () => void;
   onSelectPulse: () => void;
   onSelectWorkflows: () => void;
@@ -215,6 +216,7 @@ export function AppSidebar({
   onSelectBattleRhythm,
   onSelectCommandConsole,
   onSelectPlans,
+  onSelectRisk,
   onSelectProjects,
   onSelectPulse,
   onSelectWorkflows,
@@ -597,7 +599,6 @@ export function AppSidebar({
               testId="sidebar-more-unread-above"
             />
           ) : null}
-
           <SidebarContent
             className="buzz-sidebar-scrollbar overscroll-none"
             data-sidebar-background
@@ -616,16 +617,15 @@ export function AppSidebar({
                 onSelectHome={onSelectHome}
                 onSelectShip={onSelectShip}
                 onSelectPlans={onSelectPlans}
+                onSelectRisk={onSelectRisk}
                 onSelectProjects={onSelectProjects}
                 onSelectPulse={onSelectPulse}
                 onSelectWorkflows={onSelectWorkflows}
                 selectedView={selectedView}
               />
-
               {isLoading ? (
                 <SidebarLoadingContent shape={sidebarLoadingShape} />
               ) : null}
-
               {!isLoading ? (
                 <>
                   {starredChannels.length > 0 ? (

@@ -6,6 +6,7 @@ import {
   FolderGit2,
   Inbox,
   ShieldCheck,
+  ShieldAlert,
   ShipWheel,
   Zap,
 } from "lucide-react";
@@ -32,6 +33,7 @@ export type SidebarSelectedView =
   | "workflows"
   | "pulse"
   | "plans"
+  | "risk"
   | "projects"
   | "battleRhythm";
 
@@ -57,6 +59,7 @@ type AppSidebarPrimaryMenuProps = {
   onSelectHome: () => void;
   onSelectShip: () => void;
   onSelectPlans: () => void;
+  onSelectRisk: () => void;
   onSelectProjects: () => void;
   onSelectPulse: () => void;
   onSelectWorkflows: () => void;
@@ -106,6 +109,7 @@ export function AppSidebarPrimaryMenu({
   onSelectHome,
   onSelectShip,
   onSelectPlans,
+  onSelectRisk,
   onSelectProjects,
   onSelectPulse,
   onSelectWorkflows,
@@ -145,6 +149,18 @@ export function AppSidebarPrimaryMenu({
               {Math.min(homeBadgeCount, 99)}
             </SidebarMenuBadge>
           ) : null}
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            data-testid="open-risk-view"
+            isActive={selectedView === "risk"}
+            onClick={onSelectRisk}
+            tooltip="Risk"
+            type="button"
+          >
+            <ShieldAlert className="h-4 w-4" />
+            <SidebarMenuLabel>Risk</SidebarMenuLabel>
+          </SidebarMenuButton>
         </SidebarMenuItem>
         <SidebarMenuItem>
           <SidebarMenuButton
