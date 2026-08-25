@@ -148,4 +148,3 @@ events and plan milestones. Changes to incidents trigger reconciliation.
   meeting on the earliest required date.
 - The final build runs desktop checks, TypeScript validation, Rust kind tests,
   the changed E2E suite, and a visual screenshot review before local deployment.
-

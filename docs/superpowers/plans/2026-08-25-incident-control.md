@@ -136,4 +136,3 @@
 - [ ] Run `just desktop-check`, `just desktop-typecheck`, `just desktop-test`, relevant Rust tests, and `just ci`.
 - [ ] Commit with `git commit -s`, push the branch, update the dedicated PR, and wait for applicable checks.
 - [ ] Build the signed/local desktop bundle using the repository-supported release path, replace the installed Command Adviser app only after a successful build, launch it, and verify the Incident Control route in the installed application.
-
