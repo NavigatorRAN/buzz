@@ -18,9 +18,10 @@ pub struct RiskExportRow {
     pub status: String,
     pub review_date: String,
     pub acceptance: String,
+    pub psychosocial: String,
 }
 
-const HEADERS: [&str; 10] = [
+const HEADERS: [&str; 11] = [
     "Risk title",
     "Domain",
     "Owner",
@@ -31,6 +32,7 @@ const HEADERS: [&str; 10] = [
     "Status",
     "Review date",
     "Acceptance",
+    "Psychosocial attention",
 ];
 
 fn xml_escape(value: &str) -> String {
@@ -49,7 +51,7 @@ fn pdf_escape(value: &str) -> String {
         .replace(')', "\\)")
 }
 
-fn values(row: &RiskExportRow) -> [&str; 10] {
+fn values(row: &RiskExportRow) -> [&str; 11] {
     [
         &row.title,
         &row.domain,
@@ -61,6 +63,7 @@ fn values(row: &RiskExportRow) -> [&str; 10] {
         &row.status,
         &row.review_date,
         &row.acceptance,
+        &row.psychosocial,
     ]
 }
 
@@ -96,7 +99,7 @@ fn zip_bytes(files: &[(&str, String)]) -> Result<Vec<u8>, String> {
 }
 
 fn spreadsheet_row(index: usize, cells: &[&str]) -> String {
-    const COLUMNS: [&str; 10] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+    const COLUMNS: [&str; 11] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
     let cells = cells
         .iter()
         .enumerate()
@@ -163,14 +166,15 @@ fn risk_pdf_bytes(rows: &[RiskExportRow]) -> Result<Vec<u8>, String> {
             String::from("BT /F1 9 Tf 28 560 Td 12 TL (Command Adviser Risk Register) Tj T* ");
         for row in rows.iter().skip(page * ROWS_PER_PAGE).take(ROWS_PER_PAGE) {
             let line = format!(
-                "{} | {} | {} | {} | {} | {} | {}",
+                "{} | {} | {} | {} | {} | {} | {} | {}",
                 row.title,
                 row.owner,
                 row.scope,
                 row.inherent,
                 row.residual,
                 row.status,
-                row.review_date
+                row.review_date,
+                row.psychosocial
             );
             let compact = line.chars().take(150).collect::<String>();
             content.push_str(&format!("({}) Tj T* ", pdf_escape(&compact)));
@@ -244,6 +248,7 @@ mod tests {
             status: "treating".to_string(),
             review_date: "2026-08-25".to_string(),
             acceptance: "not accepted".to_string(),
+            psychosocial: "Material: Lack of role clarity".to_string(),
         }
     }
 
@@ -260,6 +265,8 @@ mod tests {
         assert!(xml.contains("Risk title"));
         assert!(xml.contains("Davit &amp; crane"));
         assert!(xml.contains("Residual"));
+        assert!(xml.contains("Psychosocial attention"));
+        assert!(xml.contains("Material: Lack of role clarity"));
     }
 
     #[test]

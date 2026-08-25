@@ -162,6 +162,12 @@ export function RiskScreen({
       status: risk.status,
       reviewDate: risk.reviewDate,
       acceptance: risk.acceptance.state,
+      psychosocial:
+        risk.psychosocialReview.state === "notIndicated"
+          ? "Not indicated"
+          : `${risk.psychosocialReview.state}: ${risk.psychosocialReview.hazards
+              .map((hazard) => psychosocialHazardLabels[hazard])
+              .join(", ")}`,
     };
   });
   return (

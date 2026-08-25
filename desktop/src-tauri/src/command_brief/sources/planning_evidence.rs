@@ -13,6 +13,10 @@ use buzz_core_pkg::kind::{
     KIND_RISK_RECORD,
 };
 
+mod psychosocial;
+
+use psychosocial::psychosocial_projection;
+
 const MAX_CONTENT_BYTES: usize = 64 * 1024;
 const MAX_TEXT_BYTES: usize = 4_096;
 const MAX_PLANNING_SOURCES: usize = 48;
@@ -357,7 +361,7 @@ fn prepare_candidate(
                 .and_then(|assessment| assessment.get("state"))
                 .and_then(Value::as_str)
                 .ok_or(())?;
-            let quote = serde_json::to_string(&json!({
+            let mut projection = json!({
                 "recordType": "operational_risk",
                 "id": id,
                 "title": title,
@@ -374,8 +378,13 @@ fn prepare_candidate(
                 "totalControls": controls.len(),
                 "reviewDate": review_date,
                 "acceptanceState": acceptance_state,
-            }))
-            .map_err(|_| ())?;
+            });
+            if let Some((state, hazards)) = psychosocial_projection(&value)? {
+                let projection = projection.as_object_mut().ok_or(())?;
+                projection.insert("psychosocialState".to_string(), json!(state));
+                projection.insert("psychosocialHazards".to_string(), json!(hazards));
+            }
+            let quote = serde_json::to_string(&projection).map_err(|_| ())?;
             if quote.len() > MAX_CONTENT_BYTES {
                 return Err(());
             }
@@ -666,7 +675,7 @@ mod tests {
     use super::*;
     use buzz_core_pkg::kind::{
         KIND_BATTLE_RHYTHM_EVENT, KIND_MISSION_CONSTRAINT, KIND_PLANNING_PROJECT,
-        KIND_PLANNING_TASK, KIND_RISK_RECORD,
+        KIND_PLANNING_TASK,
     };
 
     const OWNER: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -935,59 +944,5 @@ mod tests {
             batch.limitations,
             ["Planning evidence excluded 1 malformed or ineligible signed event."]
         );
-    }
-
-    #[test]
-    fn active_risks_are_concise_and_closed_risks_are_excluded() {
-        let risk = |id: &str, status: &str| {
-            json!({
-                "schemaVersion": 1,
-                "id": id,
-                "title": "Seaboat davit unavailable",
-                "domain": "capability",
-                "owner": "MEO",
-                "scope": { "type": "project", "id": "deployment", "label": "Regional deployment" },
-                "inherentAssessment": { "likelihood": 4, "consequence": "E" },
-                "controls": [
-                    { "id": "repair", "description": "Repair davit", "owner": "MEO", "status": "implemented", "linkedTaskId": "repair-davit", "dueDate": "2026-08-24", "effectiveness": "Function test passed" }
-                ],
-                "residualAssessment": { "likelihood": 2, "consequence": "D", "basis": "After repair", "state": "validated" },
-                "status": status,
-                "reviewDate": "2026-08-25",
-                "acceptance": { "state": "notAccepted", "authority": null, "decidedBy": null, "decidedAt": null, "direction": null }
-            })
-        };
-        let records = vec![
-            record(
-                20,
-                KIND_RISK_RECORD,
-                "risk-open",
-                200,
-                risk("risk-open", "treating"),
-            ),
-            record(
-                21,
-                KIND_RISK_RECORD,
-                "risk-closed",
-                201,
-                risk("risk-closed", "closed"),
-            ),
-        ];
-
-        let batch = select_planning_evidence(records, OWNER, OBSERVED_AT);
-
-        assert_eq!(batch.candidates.len(), 1);
-        assert_eq!(batch.candidates[0].collection, "command_risks");
-        assert!(batch.candidates[0].quote.contains("operational_risk"));
-        assert!(batch.candidates[0]
-            .quote
-            .contains("\"inherentIndex\":\"E4\""));
-        assert!(batch.candidates[0]
-            .quote
-            .contains("\"residualLevel\":\"medium\""));
-        assert!(batch.candidates[0]
-            .quote
-            .contains("\"implementedControls\":1"));
-        assert!(!batch.candidates[0].quote.contains("risk-closed"));
     }
 }

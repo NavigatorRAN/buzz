@@ -11,6 +11,7 @@ export type RiskExportRow = {
   status: string;
   reviewDate: string;
   acceptance: string;
+  psychosocial: string;
 };
 
 export function exportRiskRegister(
