@@ -24,6 +24,7 @@ abstract final class EventKind {
   static const battleRhythmSource = 30630;
   static const battleRhythmEvent = 30631;
   static const planningProject = 30632;
+  static const incidentControlRecord = 30639;
   static const planningTask = 30633;
   static const missionConstraint = 30634;
   static const planningTaskDetails = 30635;

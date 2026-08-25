@@ -490,6 +490,8 @@ pub const KIND_PLANNING_PLAYBOOK: u32 = 30636;
 pub const KIND_PLANNING_TASK_EXECUTION: u32 = 30637;
 /// Command Adviser generated task artefact (parameterized replaceable, d=artefact id).
 pub const KIND_PLANNING_TASK_ARTIFACT: u32 = 30638;
+/// Command Adviser CO-owned incident control record (parameterized replaceable, d=incident id).
+pub const KIND_INCIDENT_CONTROL_RECORD: u32 = 30639;
 /// Battle Rhythm calendar revision audit record (regular stored event).
 ///
 /// Owner-authored global history for calendar changes; unlike source and event
@@ -718,6 +720,7 @@ pub const ALL_KINDS: &[u32] = &[
     KIND_PLANNING_PLAYBOOK,
     KIND_PLANNING_TASK_EXECUTION,
     KIND_PLANNING_TASK_ARTIFACT,
+    KIND_INCIDENT_CONTROL_RECORD,
     KIND_BATTLE_RHYTHM_REVISION,
     KIND_PERSONA,
     KIND_TEAM,
@@ -938,6 +941,7 @@ const _: () = assert!(is_parameterized_replaceable(KIND_PLANNING_TASK_DETAILS));
 const _: () = assert!(is_parameterized_replaceable(KIND_PLANNING_PLAYBOOK));
 const _: () = assert!(is_parameterized_replaceable(KIND_PLANNING_TASK_EXECUTION));
 const _: () = assert!(is_parameterized_replaceable(KIND_PLANNING_TASK_ARTIFACT));
+const _: () = assert!(is_parameterized_replaceable(KIND_INCIDENT_CONTROL_RECORD));
 const _: () = assert!(is_parameterized_replaceable(KIND_PROJECT)); // 30621 ∈ 30000–39999
 const _: () = assert!(is_parameterized_replaceable(KIND_THREAD_SUMMARY)); // 39005 ∈ 30000–39999
 const _: () = assert!(is_parameterized_replaceable(KIND_WINDOW_BOUNDS)); // 39006 ∈ 30000–39999
