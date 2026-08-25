@@ -6,6 +6,7 @@ import {
   FolderGit2,
   Inbox,
   ShieldCheck,
+  ShieldAlert,
   ShipWheel,
   Zap,
 } from "lucide-react";
@@ -32,6 +33,7 @@ export type SidebarSelectedView =
   | "workflows"
   | "pulse"
   | "plans"
+  | "incidents"
   | "projects"
   | "battleRhythm";
 
@@ -55,6 +57,7 @@ type AppSidebarPrimaryMenuProps = {
   onSelectBattleRhythm: () => void;
   onSelectCommandConsole: () => void;
   onSelectHome: () => void;
+  onSelectIncidents: () => void;
   onSelectShip: () => void;
   onSelectPlans: () => void;
   onSelectProjects: () => void;
@@ -104,6 +107,7 @@ export function AppSidebarPrimaryMenu({
   onSelectBattleRhythm,
   onSelectCommandConsole,
   onSelectHome,
+  onSelectIncidents,
   onSelectShip,
   onSelectPlans,
   onSelectProjects,
@@ -118,6 +122,18 @@ export function AppSidebarPrimaryMenu({
       data-testid="sidebar-primary-menu"
     >
       <SidebarMenu className="pb-2">
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            data-testid="open-incidents-view"
+            isActive={selectedView === "incidents"}
+            onClick={onSelectIncidents}
+            tooltip="Incident Control"
+            type="button"
+          >
+            <ShieldAlert className="h-4 w-4" />
+            <SidebarMenuLabel>Incident Control</SidebarMenuLabel>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
         <SidebarMenuItem>
           <SidebarMenuButton
             className="data-[active=true]:font-normal"

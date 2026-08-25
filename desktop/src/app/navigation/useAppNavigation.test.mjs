@@ -129,3 +129,40 @@ test("goPlans navigates to the naval planning route", async () => {
   await appNavigation.goPlans();
   assert.equal(router.state.location.pathname, "/plans");
 });
+
+test("incident navigation opens the control dashboard and a specific plan", async () => {
+  let appNavigation = null;
+  function NavigationProbe() {
+    appNavigation = useAppNavigation();
+    return null;
+  }
+  const rootRoute = createRootRoute({ component: NavigationProbe });
+  const indexRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/",
+  });
+  const incidentsRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/incidents",
+  });
+  const incidentRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/incidents/$incidentId",
+  });
+  const router = createRouter({
+    history: createMemoryHistory({ initialEntries: ["/"] }),
+    routeTree: rootRoute.addChildren([
+      indexRoute,
+      incidentsRoute,
+      incidentRoute,
+    ]),
+  });
+  await router.load();
+  renderToStaticMarkup(React.createElement(RouterProvider, { router }));
+  assert.ok(appNavigation);
+
+  await appNavigation.goIncidents();
+  assert.equal(router.state.location.pathname, "/incidents");
+  await appNavigation.goIncident("incident-1");
+  assert.equal(router.state.location.pathname, "/incidents/incident-1");
+});

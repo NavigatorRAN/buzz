@@ -39,6 +39,17 @@ test("planning routes select Plans without selecting developer Projects", () => 
   });
 });
 
+test("incident routes select the dedicated Incident Control destination", () => {
+  assert.deepEqual(deriveShellRoute("/incidents"), {
+    selectedChannelId: null,
+    selectedView: "incidents",
+  });
+  assert.deepEqual(deriveShellRoute("/incidents/incident-1"), {
+    selectedChannelId: null,
+    selectedView: "incidents",
+  });
+});
+
 test("shouldBounceForChannelNotification_allowsTopLevelChannelMessages", () => {
   assert.equal(shouldBounceForChannelNotification([["h", "channel"]]), true);
 });

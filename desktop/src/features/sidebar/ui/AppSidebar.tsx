@@ -143,14 +143,11 @@ type AppSidebarProps = {
   onSelectPulse: () => void;
   onSelectWorkflows: () => void;
   onSelectHome: () => void;
+  onSelectIncidents: () => void;
   onSelectShip: () => void;
   onSelectChannel: (channelId: string) => void;
   onOpenSearchResult: (hit: SearchHit) => void;
-  /**
-   * Full channel set used for global search. Unlike `channels` (which is
-   * scoped to the viewer's joined sidebar list), this includes open channels
-   * the viewer hasn't joined, so search can surface them.
-   */
+  /** Full channel set used for global search, including open unjoined channels. */
   searchChannels: Channel[];
   searchFocusRequest: number;
   onSelectSettings: (section?: SettingsSection) => void;
@@ -219,6 +216,7 @@ export function AppSidebar({
   onSelectPulse,
   onSelectWorkflows,
   onSelectHome,
+  onSelectIncidents,
   onSelectShip,
   onSelectChannel,
   onOpenSearchResult,
@@ -614,6 +612,7 @@ export function AppSidebar({
                 onSelectBattleRhythm={onSelectBattleRhythm}
                 onSelectCommandConsole={onSelectCommandConsole}
                 onSelectHome={onSelectHome}
+                onSelectIncidents={onSelectIncidents}
                 onSelectShip={onSelectShip}
                 onSelectPlans={onSelectPlans}
                 onSelectProjects={onSelectProjects}

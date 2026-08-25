@@ -17,6 +17,7 @@ import type { BriefDecisionActions } from "./BriefDecisionSection";
 import { DailyCommandBrief } from "./DailyCommandBrief";
 import { ModelRoutingControls } from "./ModelRoutingControls";
 import { WorldMonitorConnectionCard } from "./WorldMonitorConnectionCard";
+import { IncidentBriefFollowUps } from "./IncidentBriefFollowUps";
 
 const ACTIVE_BRIEF_STATES = new Set([
   "queued",
@@ -112,6 +113,8 @@ function CommandConsoleContent({
         </section>
 
         <WorldMonitorConnectionCard />
+
+        <IncidentBriefFollowUps />
 
         <DailyCommandBrief
           busy={commandBrief.busy}

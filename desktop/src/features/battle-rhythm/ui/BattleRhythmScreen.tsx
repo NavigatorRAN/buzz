@@ -6,6 +6,9 @@ import {
   type PlanTaskCalendarProjection,
 } from "@/features/plans/domain/calendarProjection";
 import { usePlansQuery } from "@/features/plans/hooks";
+import { projectCombinedIncidentSync } from "@/features/incidents/domain/calendarProjection";
+import { deriveCombinedIncidentSync } from "@/features/incidents/domain/evaluation";
+import { useIncidentsQuery } from "@/features/incidents/hooks";
 import { useIdentityQuery } from "@/shared/api/hooks";
 import { readAppleInputs } from "@/shared/api/tauriAppleInputs";
 import {
@@ -68,6 +71,7 @@ export function BattleRhythmScreen() {
   const range = React.useMemo(() => getYearRange(day, TIME_ZONE, 24), [day]);
   const rhythm = useBattleRhythmQuery(identity.data?.pubkey, range);
   const plans = usePlansQuery(identity.data?.pubkey);
+  const incidents = useIncidentsQuery(identity.data?.pubkey);
   const { goPlan } = useAppNavigation();
   const mutations = useBattleRhythmMutations(
     identity.data?.pubkey ?? "",
@@ -113,6 +117,17 @@ export function BattleRhythmScreen() {
       ),
     [plans.data?.projects, plans.data?.tasks, range],
   );
+  const combinedIncidentSync = React.useMemo(
+    () => deriveCombinedIncidentSync(incidents.data ?? []),
+    [incidents.data],
+  );
+  const incidentSync = React.useMemo(() => {
+    const timeZone = combinedIncidentSync
+      ? shipStateAt(routinePeriods, `${combinedIncidentSync.date}T12:00:00Z`)
+          .timeZone
+      : TIME_ZONE;
+    return projectCombinedIncidentSync(incidents.data ?? [], timeZone);
+  }, [combinedIncidentSync, incidents.data, routinePeriods]);
   const dayPlanMilestones = planMilestones.filter(
     (milestone) => milestone.date === day,
   );
@@ -128,6 +143,7 @@ export function BattleRhythmScreen() {
         events,
         range,
         planMilestones,
+        incidentSync,
       );
       setAppleStatus(status);
     } catch (cause) {
@@ -147,7 +163,7 @@ export function BattleRhythmScreen() {
     } finally {
       setAppleBusy(false);
     }
-  }, [events, planMilestones, range]);
+  }, [events, incidentSync, planMilestones, range]);
   React.useEffect(() => {
     if (!rhythm.isSuccess) return;
     setAppleStatus((current) =>

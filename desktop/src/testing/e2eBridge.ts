@@ -44,6 +44,7 @@ import {
   KIND_GIT_STATUS_MERGED,
   KIND_GIT_STATUS_OPEN,
   KIND_HUDDLE_STARTED,
+  KIND_INCIDENT_CONTROL_RECORD,
   KIND_MEMBER_ADDED_NOTIFICATION,
   KIND_MEMBER_REMOVED_NOTIFICATION,
   KIND_MISSION_CONSTRAINT,
@@ -9976,6 +9977,7 @@ function sendToMockSocket(args: {
           KIND_PLANNING_PLAYBOOK,
           KIND_PLANNING_TASK_EXECUTION,
           KIND_PLANNING_TASK_ARTIFACT,
+          KIND_INCIDENT_CONTROL_RECORD,
         ].includes(kind),
       )
     ) {
@@ -10133,6 +10135,7 @@ function sendToMockSocket(args: {
         KIND_PLANNING_PLAYBOOK,
         KIND_PLANNING_TASK_EXECUTION,
         KIND_PLANNING_TASK_ARTIFACT,
+        KIND_INCIDENT_CONTROL_RECORD,
       ].includes(event.kind)
     ) {
       const rejectionIndex =

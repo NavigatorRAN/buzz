@@ -4,6 +4,7 @@ import {
   type AppleInputResponse,
 } from "@/shared/api/tauriAppleInputs";
 import type { PlanTaskCalendarProjection } from "@/features/plans/domain/calendarProjection";
+import type { IncidentSyncCalendarProjection } from "@/features/incidents/domain/calendarProjection";
 import { type DateRange, localDateTimeToRfc3339 } from "../domain/dateRange";
 import type { BattleRhythmEvent } from "../domain/contracts";
 
@@ -32,6 +33,7 @@ function bounded(value: string | null, maximum: number): string | null {
 export function projectBattleRhythmToApple(
   events: readonly BattleRhythmEvent[],
   planMilestones: readonly PlanTaskCalendarProjection[] = [],
+  incidentSync: IncidentSyncCalendarProjection | null = null,
 ) {
   const calendarEvents = events
     .filter((event) => event.status === "approved")
@@ -87,7 +89,11 @@ export function projectBattleRhythmToApple(
       ),
     });
   });
-  return [...calendarEvents, ...taskMilestones];
+  return [
+    ...calendarEvents,
+    ...taskMilestones,
+    ...(incidentSync ? [incidentSync] : []),
+  ];
 }
 
 function count(value: string | undefined): number {
@@ -152,13 +158,18 @@ export async function publishBattleRhythmToApple(
   events: readonly BattleRhythmEvent[],
   coverage: DateRange,
   planMilestones: readonly PlanTaskCalendarProjection[] = [],
+  incidentSync: IncidentSyncCalendarProjection | null = null,
 ): Promise<ApplePublicationStatus> {
   const response = await readAppleInputs({
     operation: "reconcile_calendar",
     arguments: {
       coverage_start: coverage.start,
       coverage_end: coverage.end,
-      projections: projectBattleRhythmToApple(events, planMilestones),
+      projections: projectBattleRhythmToApple(
+        events,
+        planMilestones,
+        incidentSync,
+      ),
     },
   });
   return parseApplePublicationStatus(response);

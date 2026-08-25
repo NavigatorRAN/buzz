@@ -8,6 +8,8 @@ export const routes = rootRoute("root.tsx", [
   route("/battle-rhythm", "battle-rhythm.tsx"),
   route("/plans", "plans.tsx"),
   route("/plans/$planId", "plans.$planId.tsx"),
+  route("/incidents", "incidents.tsx"),
+  route("/incidents/$incidentId", "incidents.$incidentId.tsx"),
   route("/pulse", "pulse.tsx"),
   route("/reminders", "reminders.tsx"),
   route("/settings", "settings.tsx"),
