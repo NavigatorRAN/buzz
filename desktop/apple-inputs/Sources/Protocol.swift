@@ -182,7 +182,15 @@ struct AppleInputRequest {
         return integer
     }
     private static func date(_ value: Any?, name: String) throws -> Date {
-        guard let text = value as? String, text.utf8.count <= 64, let parsed = ISO8601DateFormatter().date(from: text) else {
+        guard let text = value as? String, text.utf8.count <= 64 else {
+            throw AppleInputFailure.invalidRequest("\(name) must be an ISO-8601 date")
+        }
+        let formatter = ISO8601DateFormatter()
+        if let parsed = formatter.date(from: text) {
+            return parsed
+        }
+        formatter.formatOptions.insert(.withFractionalSeconds)
+        guard let parsed = formatter.date(from: text) else {
             throw AppleInputFailure.invalidRequest("\(name) must be an ISO-8601 date")
         }
         return parsed
