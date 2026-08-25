@@ -21,6 +21,8 @@ Version 1 provides:
 9. Links from controls to existing Plans tasks; due and review dates are shown in Risk and remain available as signed evidence for the Daily Command Brief.
 10. Open, overdue, elevation-required, and accepted risks are supplied to the Daily Command Brief as concise signed planning evidence.
 11. Excel and PDF export of the current filtered register through the native save dialog.
+12. A psychosocial-hazard review within each risk record, using Safe Work Australia hazard factors as a cross-cutting lens without changing the ADFP likelihood/consequence score.
+13. Advisory prompts when short-notice ship-programme changes may warrant a psychosocial review; prompts open an unsaved draft and never create or re-score a risk automatically.
 
 Structured workbook import, quantitative/probabilistic models, portfolio aggregation, automatic risk acceptance, a separate Risk Adviser, and a complete formal JMAP workspace are deferred.
 
@@ -108,6 +110,30 @@ type RiskRecordV1 = {
     decidedAt: string | null;
     direction: string | null;
   };
+  psychosocialReview: {
+    state: "notIndicated" | "consideration" | "material";
+    hazards: Array<
+      | "jobDemands"
+      | "lowJobControl"
+      | "poorSupport"
+      | "lackOfRoleClarity"
+      | "poorOrganisationalChangeManagement"
+      | "inadequateRewardAndRecognition"
+      | "poorOrganisationalJustice"
+      | "traumaticEventsOrMaterial"
+      | "remoteOrIsolatedWork"
+      | "poorPhysicalEnvironment"
+      | "harmfulBehaviours"
+    >;
+    exposure: {
+      frequency: "isolated" | "repeated" | "ongoing";
+      duration: "brief" | "extended" | "prolonged";
+      severity: "low" | "moderate" | "high";
+    } | null;
+    basis: string | null;
+    linkedRiskId: string | null;
+    reviewedAt: string | null;
+  };
   sourceEvidence: string | null;
   sourceConstraintId: string | null;
   createdAt: string;
@@ -115,7 +141,7 @@ type RiskRecordV1 = {
 };
 ```
 
-Contract validation requires exact fields, bounded text and arrays, valid dates/timestamps, unique control IDs, no task scope without an ID, at least one control for `controlled`/`accepted`, every control implemented before residual state can be `validated`, and a complete acceptance decision before state can be `accepted` or `elevated`.
+Contract validation requires exact fields, bounded text and arrays, valid dates/timestamps, unique control IDs, no task scope without an ID, at least one control for `controlled`/`accepted`, every control implemented before residual state can be `validated`, and a complete acceptance decision before state can be `accepted` or `elevated`. A psychosocial state of `consideration` or `material` requires at least one hazard, exposure context, a concise basis, and a review timestamp. A linked personnel risk is optional and only valid for `material` reviews. The psychosocial review never modifies the matrix calculation.
 
 ### `RiskAuthorityProfileV1` — Nostr kind `30640`
 
@@ -149,9 +175,17 @@ type RiskAuthorityProfileV1 = {
 
 Plans retains Mission Constraints as the precursor state. A `riskCandidate` row receives a `Promote to Risk` action. It opens the Risk editor prefilled with the description, owner, project/task links, source evidence, and source constraint ID; the user supplies the assessment and saves. No constraint is automatically changed or deleted.
 
+### Psychosocial-hazard review
+
+Psychosocial hazards are considered inside the existing operational risk workflow rather than as a second risk system. The review records whether the factor is not indicated, warrants consideration, or is a material risk. It captures the applicable hazard factors and the frequency, duration, and severity of exposure. Controls remain ordinary controls on the risk record, so they retain owners, status, due dates, and task links.
+
+Battle Rhythm may suggest a review when an all-day FAS or Longcast programme event is added, removed, or changed within seven days of execution. The initial suggestion covers job demands, poor support, lack of role clarity, and poor organisational change management. A suggestion is advisory: it does not persist anything, change a matrix score, or create a scheduling conflict. The user must open the draft, assess the circumstances, and save it.
+
+A temporary factor that can be readily controlled remains attached to the operational risk. A severe, frequent, or prolonged factor may be marked `material` and linked to a separate personnel risk when that gives clearer ownership and treatment. Individual medical information, protected complaints, and personal case details are not entered in the general command risk register.
+
 ### Daily Command Brief
 
-The signed risk record is treated as a planning source. The brief receives only active material risk fields: title, owner, domain, scope, inherent index/level, residual index/level/state, control progress, review date, status, and acceptance state. Closed risks are excluded. Sort priority is elevation required, overdue review, then descending risk level. The bounded planning evidence limit remains in force.
+The signed risk record is treated as a planning source. The brief receives only active material risk fields: title, owner, domain, scope, inherent index/level, residual index/level/state, control progress, review date, status, and acceptance state. For `consideration` or `material` psychosocial reviews it also receives the state and concise hazard labels; `notIndicated` reviews are omitted. Closed risks are excluded. Sort priority is elevation required, overdue review, then descending risk level. The bounded planning evidence limit remains in force. Brief prose remains action-oriented and does not reproduce the full review or source commentary.
 
 ### Export
 
@@ -165,6 +199,8 @@ The Risk screen uses the established dark navy Command Adviser theme and rem-bas
 - Summary cards: Open, Elevation required, Review overdue, and Controls outstanding.
 - Main grid: interactive matrix on the left; filterable register on the right. Selecting a matrix cell filters matching current residual assessments.
 - Register columns: Risk, Scope, Owner, Inherent, Residual, Controls, Review, and Disposition.
+- A compact `Psychosocial attention` filter and row marker reveal risks in `consideration` or `material` state without adding a competing headline score.
+- A small `Programme change review` panel shows current Battle Rhythm suggestions and opens a prefilled, unsaved risk draft.
 - Selecting a row opens a detail panel with full assessment, controls, evidence, links, acceptance, and edit action.
 - Empty state explains how to create a risk or promote a Mission Constraint.
 
@@ -177,6 +213,11 @@ The Risk screen uses the established dark navy Command Adviser theme and rem-bas
 - The UI supports create, edit, filter, matrix selection, authority-profile edit, and constraint promotion.
 - Project/task links resolve against existing Plans data.
 - The Daily Command Brief includes concise active risk evidence and excludes closed risks.
+- Psychosocial reviews validate and round-trip, never change the 5x5 matrix output, and only material/consideration states reach the brief.
+- Battle Rhythm prompts remain suggestions until the user explicitly saves a risk.
 - Excel and PDF exports save through the macOS native dialog.
 - Desktop unit tests, Rust unit tests, typecheck, lint/checks, E2E smoke for the Risk journey, and the relevant full project gates pass before installation.
 
+## Psychosocial Guidance Source
+
+The factor list and exposure test are informed by the supplied Safe Work Australia psychosocial-hazards synthesis dated 25 August 2026. It is guidance for recognising interacting work-design hazards; current Safe Work Australia model code and applicable Defence policy remain the authoritative references. The application records command risk judgements and controls rather than making a clinical assessment.
