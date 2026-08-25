@@ -88,6 +88,22 @@ test("projects linked plan milestones with stable plan-task identities", () => {
   });
 });
 
+test("includes one timed privacy-minimised incident sync", () => {
+  const incidentSync = {
+    external_id: "incident-control:combined-sync",
+    title: "CO Incident Sync",
+    start: "2026-08-15T10:00:00+10:00",
+    end: "2026-08-15T10:30:00+10:00",
+    is_all_day: false,
+    location: null,
+    notes: "Private command meeting · 2 active incidents",
+  };
+  const projected = projectBattleRhythmToApple([event()], [], incidentSync);
+
+  assert.equal(projected.length, 2);
+  assert.deepEqual(projected[1], incidentSync);
+});
+
 test("publishes the authoritative coverage and parses reconciliation counts", async () => {
   calls.length = 0;
   response = {

@@ -149,6 +149,24 @@ export function useAppNavigation() {
     [commitNavigation],
   );
 
+  const goIncidents = React.useCallback(
+    (behavior?: NavigationBehavior) =>
+      commitNavigation({ to: "/incidents" }, behavior),
+    [commitNavigation],
+  );
+
+  const goIncident = React.useCallback(
+    (incidentId: string, behavior?: NavigationBehavior) =>
+      commitNavigation(
+        {
+          to: "/incidents/$incidentId",
+          params: { incidentId },
+        },
+        behavior,
+      ),
+    [commitNavigation],
+  );
+
   const goProject = React.useCallback(
     (
       projectId: string,
@@ -367,6 +385,8 @@ export function useAppNavigation() {
     goCommandConsole,
     goForumPost,
     goHome,
+    goIncident,
+    goIncidents,
     goNewMessage,
     goPlan,
     goPlans,

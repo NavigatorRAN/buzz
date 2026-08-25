@@ -894,6 +894,7 @@ export function AppShell() {
                         searchChannels={channels}
                         searchFocusRequest={searchFocusRequest}
                         onSelectHome={() => void navigation.goHome()}
+                        onSelectIncidents={() => void navigation.goIncidents()}
                         onSelectShip={() => void navigation.goShip()}
                         onSelectPlans={() => void navigation.goPlans()}
                         onSelectProjects={() => void navigation.goProjects()}

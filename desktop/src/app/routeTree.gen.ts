@@ -12,6 +12,7 @@ import { Route as remindersRouteImport } from "./routes/reminders";
 import { Route as pulseRouteImport } from "./routes/pulse";
 import { Route as projectsRouteImport } from "./routes/projects";
 import { Route as plansRouteImport } from "./routes/plans";
+import { Route as incidentsRouteImport } from "./routes/incidents";
 import { Route as consoleRouteImport } from "./routes/console";
 import { Route as battleRhythmRouteImport } from "./routes/battle-rhythm";
 import { Route as agentsRouteImport } from "./routes/agents";
@@ -20,6 +21,7 @@ import { Route as workflowsDotworkflowIdRouteImport } from "./routes/workflows.$
 import { Route as projectsDotprojectIdRouteImport } from "./routes/projects.$projectId";
 import { Route as plansDotplanIdRouteImport } from "./routes/plans.$planId";
 import { Route as messagesDotnewRouteImport } from "./routes/messages.new";
+import { Route as incidentsDotincidentIdRouteImport } from "./routes/incidents.$incidentId";
 import { Route as channelsDotchannelIdRouteImport } from "./routes/channels.$channelId";
 import { Route as channelsDotchannelIdDotpostsDotpostIdRouteImport } from "./routes/channels.$channelId.posts.$postId";
 
@@ -56,6 +58,11 @@ const projectsRoute = projectsRouteImport.update({
 const plansRoute = plansRouteImport.update({
   id: "/plans",
   path: "/plans",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const incidentsRoute = incidentsRouteImport.update({
+  id: "/incidents",
+  path: "/incidents",
   getParentRoute: () => rootRouteImport,
 } as any);
 const consoleRoute = consoleRouteImport.update({
@@ -98,6 +105,11 @@ const messagesDotnewRoute = messagesDotnewRouteImport.update({
   path: "/messages/new",
   getParentRoute: () => rootRouteImport,
 } as any);
+const incidentsDotincidentIdRoute = incidentsDotincidentIdRouteImport.update({
+  id: "/incidents/$incidentId",
+  path: "/incidents/$incidentId",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const channelsDotchannelIdRoute = channelsDotchannelIdRouteImport.update({
   id: "/channels/$channelId",
   path: "/channels/$channelId",
@@ -115,6 +127,7 @@ export interface FileRoutesByFullPath {
   "/agents": typeof agentsRoute;
   "/battle-rhythm": typeof battleRhythmRoute;
   "/console": typeof consoleRoute;
+  "/incidents": typeof incidentsRoute;
   "/plans": typeof plansRoute;
   "/projects": typeof projectsRoute;
   "/pulse": typeof pulseRoute;
@@ -123,6 +136,7 @@ export interface FileRoutesByFullPath {
   "/ship": typeof shipRoute;
   "/workflows": typeof workflowsRoute;
   "/channels/$channelId": typeof channelsDotchannelIdRoute;
+  "/incidents/$incidentId": typeof incidentsDotincidentIdRoute;
   "/messages/new": typeof messagesDotnewRoute;
   "/plans/$planId": typeof plansDotplanIdRoute;
   "/projects/$projectId": typeof projectsDotprojectIdRoute;
@@ -134,6 +148,7 @@ export interface FileRoutesByTo {
   "/agents": typeof agentsRoute;
   "/battle-rhythm": typeof battleRhythmRoute;
   "/console": typeof consoleRoute;
+  "/incidents": typeof incidentsRoute;
   "/plans": typeof plansRoute;
   "/projects": typeof projectsRoute;
   "/pulse": typeof pulseRoute;
@@ -142,6 +157,7 @@ export interface FileRoutesByTo {
   "/ship": typeof shipRoute;
   "/workflows": typeof workflowsRoute;
   "/channels/$channelId": typeof channelsDotchannelIdRoute;
+  "/incidents/$incidentId": typeof incidentsDotincidentIdRoute;
   "/messages/new": typeof messagesDotnewRoute;
   "/plans/$planId": typeof plansDotplanIdRoute;
   "/projects/$projectId": typeof projectsDotprojectIdRoute;
@@ -154,6 +170,7 @@ export interface FileRoutesById {
   "/agents": typeof agentsRoute;
   "/battle-rhythm": typeof battleRhythmRoute;
   "/console": typeof consoleRoute;
+  "/incidents": typeof incidentsRoute;
   "/plans": typeof plansRoute;
   "/projects": typeof projectsRoute;
   "/pulse": typeof pulseRoute;
@@ -162,6 +179,7 @@ export interface FileRoutesById {
   "/ship": typeof shipRoute;
   "/workflows": typeof workflowsRoute;
   "/channels/$channelId": typeof channelsDotchannelIdRoute;
+  "/incidents/$incidentId": typeof incidentsDotincidentIdRoute;
   "/messages/new": typeof messagesDotnewRoute;
   "/plans/$planId": typeof plansDotplanIdRoute;
   "/projects/$projectId": typeof projectsDotprojectIdRoute;
@@ -175,6 +193,7 @@ export interface FileRouteTypes {
     | "/agents"
     | "/battle-rhythm"
     | "/console"
+    | "/incidents"
     | "/plans"
     | "/projects"
     | "/pulse"
@@ -183,6 +202,7 @@ export interface FileRouteTypes {
     | "/ship"
     | "/workflows"
     | "/channels/$channelId"
+    | "/incidents/$incidentId"
     | "/messages/new"
     | "/plans/$planId"
     | "/projects/$projectId"
@@ -194,6 +214,7 @@ export interface FileRouteTypes {
     | "/agents"
     | "/battle-rhythm"
     | "/console"
+    | "/incidents"
     | "/plans"
     | "/projects"
     | "/pulse"
@@ -202,6 +223,7 @@ export interface FileRouteTypes {
     | "/ship"
     | "/workflows"
     | "/channels/$channelId"
+    | "/incidents/$incidentId"
     | "/messages/new"
     | "/plans/$planId"
     | "/projects/$projectId"
@@ -213,6 +235,7 @@ export interface FileRouteTypes {
     | "/agents"
     | "/battle-rhythm"
     | "/console"
+    | "/incidents"
     | "/plans"
     | "/projects"
     | "/pulse"
@@ -221,6 +244,7 @@ export interface FileRouteTypes {
     | "/ship"
     | "/workflows"
     | "/channels/$channelId"
+    | "/incidents/$incidentId"
     | "/messages/new"
     | "/plans/$planId"
     | "/projects/$projectId"
@@ -233,6 +257,7 @@ export interface RootRouteChildren {
   agentsRoute: typeof agentsRoute;
   battleRhythmRoute: typeof battleRhythmRoute;
   consoleRoute: typeof consoleRoute;
+  incidentsRoute: typeof incidentsRoute;
   plansRoute: typeof plansRoute;
   projectsRoute: typeof projectsRoute;
   pulseRoute: typeof pulseRoute;
@@ -241,6 +266,7 @@ export interface RootRouteChildren {
   shipRoute: typeof shipRoute;
   workflowsRoute: typeof workflowsRoute;
   channelsDotchannelIdRoute: typeof channelsDotchannelIdRoute;
+  incidentsDotincidentIdRoute: typeof incidentsDotincidentIdRoute;
   messagesDotnewRoute: typeof messagesDotnewRoute;
   plansDotplanIdRoute: typeof plansDotplanIdRoute;
   projectsDotprojectIdRoute: typeof projectsDotprojectIdRoute;
@@ -299,6 +325,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof plansRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/incidents": {
+      id: "/incidents";
+      path: "/incidents";
+      fullPath: "/incidents";
+      preLoaderRoute: typeof incidentsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     "/console": {
       id: "/console";
       path: "/console";
@@ -355,6 +388,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof messagesDotnewRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/incidents/$incidentId": {
+      id: "/incidents/$incidentId";
+      path: "/incidents/$incidentId";
+      fullPath: "/incidents/$incidentId";
+      preLoaderRoute: typeof incidentsDotincidentIdRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     "/channels/$channelId": {
       id: "/channels/$channelId";
       path: "/channels/$channelId";
@@ -377,6 +417,7 @@ const rootRouteChildren: RootRouteChildren = {
   agentsRoute: agentsRoute,
   battleRhythmRoute: battleRhythmRoute,
   consoleRoute: consoleRoute,
+  incidentsRoute: incidentsRoute,
   plansRoute: plansRoute,
   projectsRoute: projectsRoute,
   pulseRoute: pulseRoute,
@@ -385,6 +426,7 @@ const rootRouteChildren: RootRouteChildren = {
   shipRoute: shipRoute,
   workflowsRoute: workflowsRoute,
   channelsDotchannelIdRoute: channelsDotchannelIdRoute,
+  incidentsDotincidentIdRoute: incidentsDotincidentIdRoute,
   messagesDotnewRoute: messagesDotnewRoute,
   plansDotplanIdRoute: plansDotplanIdRoute,
   projectsDotprojectIdRoute: projectsDotprojectIdRoute,
