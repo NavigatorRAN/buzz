@@ -161,6 +161,112 @@ pub enum RiskAcceptanceState {
     Elevated,
 }
 
+/// Materiality state of a psychosocial-hazard review.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum PsychosocialReviewState {
+    /// No relevant psychosocial hazard is currently indicated.
+    NotIndicated,
+    /// A work-design factor should be considered and controlled where necessary.
+    Consideration,
+    /// The factor is material enough to require explicit risk treatment.
+    Material,
+}
+
+/// Psychosocial work-design factors recognised by Safe Work Australia guidance.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "camelCase")]
+pub enum PsychosocialHazard {
+    /// Excessive or conflicting job demands.
+    JobDemands,
+    /// Insufficient control over how work is performed.
+    LowJobControl,
+    /// Inadequate practical or supervisory support.
+    PoorSupport,
+    /// Unclear roles, priorities, or responsibilities.
+    LackOfRoleClarity,
+    /// Poorly communicated or managed organisational change.
+    PoorOrganisationalChangeManagement,
+    /// Inadequate acknowledgement of effort or contribution.
+    InadequateRewardAndRecognition,
+    /// Unfair or inconsistently applied organisational processes.
+    PoorOrganisationalJustice,
+    /// Exposure to traumatic events or material.
+    TraumaticEventsOrMaterial,
+    /// Remote or isolated work.
+    RemoteOrIsolatedWork,
+    /// Poor physical working conditions.
+    PoorPhysicalEnvironment,
+    /// Harmful behaviours, harassment, or poor workplace relationships.
+    HarmfulBehaviours,
+}
+
+/// Frequency of exposure to a psychosocial factor.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum PsychosocialExposureFrequency {
+    /// A single or isolated occurrence.
+    Isolated,
+    /// A factor that occurs repeatedly.
+    Repeated,
+    /// A continuously present factor.
+    Ongoing,
+}
+
+/// Duration of exposure to a psychosocial factor.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum PsychosocialExposureDuration {
+    /// Brief exposure.
+    Brief,
+    /// Extended exposure.
+    Extended,
+    /// Prolonged exposure.
+    Prolonged,
+}
+
+/// Severity of exposure to a psychosocial factor.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum PsychosocialExposureSeverity {
+    /// Low-severity exposure.
+    Low,
+    /// Moderate-severity exposure.
+    Moderate,
+    /// High-severity exposure.
+    High,
+}
+
+/// Exposure context used to judge psychosocial materiality.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PsychosocialExposure {
+    /// How often the factor occurs.
+    pub frequency: PsychosocialExposureFrequency,
+    /// How long the factor persists.
+    pub duration: PsychosocialExposureDuration,
+    /// Potential severity of the exposure.
+    pub severity: PsychosocialExposureSeverity,
+}
+
+/// Cross-cutting psychosocial review attached to an operational risk.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PsychosocialReview {
+    /// Review conclusion.
+    pub state: PsychosocialReviewState,
+    /// Applicable work-design hazards.
+    pub hazards: Vec<PsychosocialHazard>,
+    /// Exposure context when a factor warrants consideration.
+    pub exposure: Option<PsychosocialExposure>,
+    /// Concise command basis for the review.
+    pub basis: Option<String>,
+    /// Optional linked personnel risk for a material factor.
+    pub linked_risk_id: Option<String>,
+    /// Time at which the review was made.
+    pub reviewed_at: Option<String>,
+}
+
 /// Likelihood and consequence pair.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -272,6 +378,8 @@ pub struct RiskRecordV1 {
     pub review_date: String,
     /// Human disposition.
     pub acceptance: RiskAcceptance,
+    /// Cross-cutting psychosocial-hazard review.
+    pub psychosocial_review: PsychosocialReview,
     /// Optional source evidence.
     pub source_evidence: Option<String>,
     /// Optional originating Mission Constraint.
@@ -300,6 +408,7 @@ struct RiskRecordWire {
     status: RiskStatus,
     review_date: String,
     acceptance: RiskAcceptance,
+    psychosocial_review: PsychosocialReview,
     source_evidence: Option<String>,
     source_constraint_id: Option<String>,
     created_at: String,
@@ -516,6 +625,56 @@ impl TryFrom<RiskRecordWire> for RiskRecordV1 {
         if let Some(decided_at) = value.acceptance.decided_at.as_deref() {
             timestamp(decided_at, "decidedAt")?;
         }
+        if value.psychosocial_review.hazards.len() > 11 {
+            return Err("psychosocial hazards exceed their bounds".to_owned());
+        }
+        let mut psychosocial_hazards = BTreeSet::new();
+        for hazard in &value.psychosocial_review.hazards {
+            if !psychosocial_hazards.insert(*hazard) {
+                return Err("psychosocial hazards must be unique".to_owned());
+            }
+        }
+        optional_bounded(
+            value.psychosocial_review.basis.as_deref(),
+            "psychosocial review basis",
+            8_192,
+        )?;
+        optional_bounded(
+            value.psychosocial_review.linked_risk_id.as_deref(),
+            "psychosocial linked risk id",
+            256,
+        )?;
+        if let Some(reviewed_at) = value.psychosocial_review.reviewed_at.as_deref() {
+            timestamp(reviewed_at, "psychosocial reviewedAt")?;
+        }
+        match value.psychosocial_review.state {
+            PsychosocialReviewState::NotIndicated => {
+                if !value.psychosocial_review.hazards.is_empty()
+                    || value.psychosocial_review.exposure.is_some()
+                    || value.psychosocial_review.linked_risk_id.is_some()
+                {
+                    return Err("not indicated psychosocial review cannot carry hazards, exposure, or linked risk".to_owned());
+                }
+            }
+            PsychosocialReviewState::Consideration | PsychosocialReviewState::Material => {
+                if value.psychosocial_review.hazards.is_empty()
+                    || value.psychosocial_review.exposure.is_none()
+                    || value
+                        .psychosocial_review
+                        .basis
+                        .as_deref()
+                        .is_none_or(|item| item.trim().is_empty())
+                    || value.psychosocial_review.reviewed_at.is_none()
+                {
+                    return Err("psychosocial consideration or material review requires hazards, exposure, basis, and reviewedAt".to_owned());
+                }
+            }
+        }
+        if value.psychosocial_review.linked_risk_id.is_some()
+            && value.psychosocial_review.state != PsychosocialReviewState::Material
+        {
+            return Err("psychosocial linked risk is only valid for material review".to_owned());
+        }
         date(&value.review_date, "reviewDate")?;
         optional_bounded(value.source_evidence.as_deref(), "sourceEvidence", 8_192)?;
         optional_bounded(
@@ -541,6 +700,7 @@ impl TryFrom<RiskRecordWire> for RiskRecordV1 {
             status: value.status,
             review_date: value.review_date,
             acceptance: value.acceptance,
+            psychosocial_review: value.psychosocial_review,
             source_evidence: value.source_evidence,
             source_constraint_id: value.source_constraint_id,
             created_at: value.created_at,

@@ -46,6 +46,14 @@ function risk() {
       decidedAt: null,
       direction: null,
     },
+    psychosocialReview: {
+      state: "notIndicated",
+      hazards: [],
+      exposure: null,
+      basis: null,
+      linkedRiskId: null,
+      reviewedAt: null,
+    },
     sourceEvidence: "Defect list 42",
     sourceConstraintId: "constraint-1",
     createdAt: "2026-08-19T00:00:00Z",
@@ -131,4 +139,44 @@ test("closing a risk requires command direction", () => {
   assert.throws(() => parseRiskRecord(closed), /direction/i);
   closed.acceptance.direction = "Mission changed; seaboat task removed.";
   assert.equal(parseRiskRecord(closed).status, "closed");
+});
+
+test("consideration and material psychosocial reviews require bounded assessment details", () => {
+  const considered = risk();
+  considered.psychosocialReview = {
+    state: "consideration",
+    hazards: ["lackOfRoleClarity", "poorOrganisationalChangeManagement"],
+    exposure: {
+      frequency: "isolated",
+      duration: "brief",
+      severity: "moderate",
+    },
+    basis: "The sailing programme changed within the preparation window.",
+    linkedRiskId: null,
+    reviewedAt: "2026-08-25T01:00:00Z",
+  };
+  assert.equal(
+    parseRiskRecord(considered).psychosocialReview.state,
+    "consideration",
+  );
+
+  const missingHazards = structuredClone(considered);
+  missingHazards.psychosocialReview.hazards = [];
+  assert.throws(() => parseRiskRecord(missingHazards), /hazard/i);
+
+  const missingExposure = structuredClone(considered);
+  missingExposure.psychosocialReview.exposure = null;
+  assert.throws(() => parseRiskRecord(missingExposure), /exposure/i);
+
+  const linkedConsideration = structuredClone(considered);
+  linkedConsideration.psychosocialReview.linkedRiskId = "risk-personnel-1";
+  assert.throws(() => parseRiskRecord(linkedConsideration), /linked/i);
+
+  const material = structuredClone(considered);
+  material.psychosocialReview.state = "material";
+  material.psychosocialReview.linkedRiskId = "risk-personnel-1";
+  assert.equal(
+    parseRiskRecord(material).psychosocialReview.linkedRiskId,
+    "risk-personnel-1",
+  );
 });

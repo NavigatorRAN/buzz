@@ -38,6 +38,14 @@ fn risk() -> serde_json::Value {
             "decidedAt": null,
             "direction": null
         },
+        "psychosocialReview": {
+            "state": "notIndicated",
+            "hazards": [],
+            "exposure": null,
+            "basis": null,
+            "linkedRiskId": null,
+            "reviewedAt": null
+        },
         "sourceEvidence": "Defect list 42",
         "sourceConstraintId": "constraint-1",
         "createdAt": "2026-08-19T00:00:00Z",
@@ -103,4 +111,35 @@ fn accepted_risk_requires_a_complete_human_decision() {
     accepted["acceptance"]["decidedAt"] = json!("2026-08-19T01:00:00Z");
     accepted["acceptance"]["direction"] = json!("Proceed with controls maintained.");
     serde_json::from_value::<RiskRecordV1>(accepted).unwrap();
+}
+
+#[test]
+fn validates_psychosocial_review_materiality_and_linking() {
+    let mut considered = risk();
+    considered["psychosocialReview"] = json!({
+        "state": "consideration",
+        "hazards": ["lackOfRoleClarity", "poorOrganisationalChangeManagement"],
+        "exposure": {
+            "frequency": "isolated",
+            "duration": "brief",
+            "severity": "moderate"
+        },
+        "basis": "The sailing programme changed within the preparation window.",
+        "linkedRiskId": null,
+        "reviewedAt": "2026-08-25T01:00:00Z"
+    });
+    serde_json::from_value::<RiskRecordV1>(considered.clone()).unwrap();
+
+    let mut missing_hazards = considered.clone();
+    missing_hazards["psychosocialReview"]["hazards"] = json!([]);
+    assert!(serde_json::from_value::<RiskRecordV1>(missing_hazards).is_err());
+
+    let mut linked_consideration = considered.clone();
+    linked_consideration["psychosocialReview"]["linkedRiskId"] = json!("risk-personnel-1");
+    assert!(serde_json::from_value::<RiskRecordV1>(linked_consideration).is_err());
+
+    let mut material = considered;
+    material["psychosocialReview"]["state"] = json!("material");
+    material["psychosocialReview"]["linkedRiskId"] = json!("risk-personnel-1");
+    serde_json::from_value::<RiskRecordV1>(material).unwrap();
 }

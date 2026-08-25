@@ -31,6 +31,35 @@ export type RiskAcceptanceState =
   | "accepted"
   | "elevationRequired"
   | "elevated";
+export type PsychosocialReviewState =
+  | "notIndicated"
+  | "consideration"
+  | "material";
+export type PsychosocialHazard =
+  | "jobDemands"
+  | "lowJobControl"
+  | "poorSupport"
+  | "lackOfRoleClarity"
+  | "poorOrganisationalChangeManagement"
+  | "inadequateRewardAndRecognition"
+  | "poorOrganisationalJustice"
+  | "traumaticEventsOrMaterial"
+  | "remoteOrIsolatedWork"
+  | "poorPhysicalEnvironment"
+  | "harmfulBehaviours";
+export type PsychosocialExposure = Readonly<{
+  frequency: "isolated" | "repeated" | "ongoing";
+  duration: "brief" | "extended" | "prolonged";
+  severity: "low" | "moderate" | "high";
+}>;
+export type PsychosocialReview = Readonly<{
+  state: PsychosocialReviewState;
+  hazards: readonly PsychosocialHazard[];
+  exposure: PsychosocialExposure | null;
+  basis: string | null;
+  linkedRiskId: string | null;
+  reviewedAt: string | null;
+}>;
 
 export type RiskAssessment = Readonly<{
   likelihood: RiskLikelihood;
@@ -71,6 +100,7 @@ export type RiskRecordV1 = Readonly<{
     decidedAt: string | null;
     direction: string | null;
   }>;
+  psychosocialReview: PsychosocialReview;
   sourceEvidence: string | null;
   sourceConstraintId: string | null;
   createdAt: string;
@@ -134,6 +164,39 @@ const acceptanceStates = new Set<RiskAcceptanceState>([
   "accepted",
   "elevationRequired",
   "elevated",
+]);
+const psychosocialReviewStates = new Set<PsychosocialReviewState>([
+  "notIndicated",
+  "consideration",
+  "material",
+]);
+const psychosocialHazards = new Set<PsychosocialHazard>([
+  "jobDemands",
+  "lowJobControl",
+  "poorSupport",
+  "lackOfRoleClarity",
+  "poorOrganisationalChangeManagement",
+  "inadequateRewardAndRecognition",
+  "poorOrganisationalJustice",
+  "traumaticEventsOrMaterial",
+  "remoteOrIsolatedWork",
+  "poorPhysicalEnvironment",
+  "harmfulBehaviours",
+]);
+const exposureFrequencies = new Set<PsychosocialExposure["frequency"]>([
+  "isolated",
+  "repeated",
+  "ongoing",
+]);
+const exposureDurations = new Set<PsychosocialExposure["duration"]>([
+  "brief",
+  "extended",
+  "prolonged",
+]);
+const exposureSeverities = new Set<PsychosocialExposure["severity"]>([
+  "low",
+  "moderate",
+  "high",
 ]);
 const levelKeys = ["veryLow", "low", "medium", "high", "veryHigh"] as const;
 
@@ -237,6 +300,83 @@ function parseControl(value: unknown): RiskControl {
   });
 }
 
+function parsePsychosocialReview(value: unknown): PsychosocialReview {
+  const o = object(value, [
+    "state",
+    "hazards",
+    "exposure",
+    "basis",
+    "linkedRiskId",
+    "reviewedAt",
+  ]);
+  const state = enumValue(
+    o.state,
+    psychosocialReviewStates,
+    "psychosocial review state",
+  );
+  if (!Array.isArray(o.hazards) || o.hazards.length > 11)
+    fail("psychosocial hazards must be a bounded array");
+  const hazards = Object.freeze(
+    o.hazards.map((hazard) =>
+      enumValue(hazard, psychosocialHazards, "psychosocial hazard"),
+    ),
+  );
+  if (new Set(hazards).size !== hazards.length)
+    fail("psychosocial hazards must be unique");
+
+  const exposure =
+    o.exposure === null
+      ? null
+      : (() => {
+          const e = object(o.exposure, ["frequency", "duration", "severity"]);
+          return Object.freeze({
+            frequency: enumValue(
+              e.frequency,
+              exposureFrequencies,
+              "psychosocial exposure frequency",
+            ),
+            duration: enumValue(
+              e.duration,
+              exposureDurations,
+              "psychosocial exposure duration",
+            ),
+            severity: enumValue(
+              e.severity,
+              exposureSeverities,
+              "psychosocial exposure severity",
+            ),
+          });
+        })();
+  const basis = nullableText(o.basis, "psychosocial review basis");
+  const linkedRiskId = nullableText(
+    o.linkedRiskId,
+    "psychosocial linked risk id",
+  );
+  const reviewedAt = nullableTimestamp(o.reviewedAt, "psychosocial reviewedAt");
+
+  if (state === "notIndicated") {
+    if (hazards.length || exposure || linkedRiskId)
+      fail(
+        "not indicated psychosocial review cannot carry hazards, exposure, or linked risk",
+      );
+  } else if (!hazards.length || !exposure || !basis || !reviewedAt) {
+    fail(
+      "psychosocial consideration or material review requires hazards, exposure, basis, and reviewedAt",
+    );
+  }
+  if (linkedRiskId && state !== "material")
+    fail("psychosocial linked risk is only valid for material review");
+
+  return Object.freeze({
+    state,
+    hazards,
+    exposure,
+    basis,
+    linkedRiskId,
+    reviewedAt,
+  });
+}
+
 export function parseRiskRecord(value: unknown): RiskRecordV1 {
   const o = object(value, [
     "schemaVersion",
@@ -254,6 +394,7 @@ export function parseRiskRecord(value: unknown): RiskRecordV1 {
     "status",
     "reviewDate",
     "acceptance",
+    "psychosocialReview",
     "sourceEvidence",
     "sourceConstraintId",
     "createdAt",
@@ -346,6 +487,7 @@ export function parseRiskRecord(value: unknown): RiskRecordV1 {
     status,
     reviewDate: date(o.reviewDate, "reviewDate"),
     acceptance: parsedAcceptance,
+    psychosocialReview: parsePsychosocialReview(o.psychosocialReview),
     sourceEvidence: nullableText(o.sourceEvidence, "sourceEvidence"),
     sourceConstraintId: nullableText(
       o.sourceConstraintId,
