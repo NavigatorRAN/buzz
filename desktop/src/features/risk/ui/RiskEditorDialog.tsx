@@ -12,9 +12,11 @@ import type {
 } from "@/features/plans/domain/contracts";
 import {
   parseRiskRecord,
+  type PsychosocialHazard,
   type RiskControl,
   type RiskRecordV1,
 } from "../domain/contracts";
+import { psychosocialHazardLabels } from "../domain/psychosocialReview";
 import { RiskBadge } from "./RiskMatrix";
 
 function textDate(days = 7) {
@@ -97,6 +99,12 @@ export function RiskEditorDialog({
         control.id === id ? { ...control, ...patch } : control,
       ),
     });
+  const updatePsychosocial = (
+    patch: Partial<RiskRecordV1["psychosocialReview"]>,
+  ) =>
+    update({
+      psychosocialReview: { ...draft.psychosocialReview, ...patch },
+    });
   const addControl = () =>
     update({
       controls: [
@@ -115,8 +123,18 @@ export function RiskEditorDialog({
   async function save() {
     try {
       setError(null);
+      const updatedAt = new Date().toISOString();
+      const psychosocialReview =
+        draft.psychosocialReview.state === "notIndicated"
+          ? {
+              ...draft.psychosocialReview,
+              hazards: [],
+              exposure: null,
+              linkedRiskId: null,
+            }
+          : { ...draft.psychosocialReview, reviewedAt: updatedAt };
       await onSave(
-        parseRiskRecord({ ...draft, updatedAt: new Date().toISOString() }),
+        parseRiskRecord({ ...draft, psychosocialReview, updatedAt }),
       );
       onOpenChange(false);
     } catch (cause) {
@@ -447,6 +465,200 @@ export function RiskEditorDialog({
                 />
               </div>
             ))}
+          </div>
+        </section>
+        <section className="mt-5 rounded border p-4">
+          <div>
+            <h3 className="text-sm font-semibold">Psychosocial review</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Record relevant work-design factors. This review does not change
+              the ADFP likelihood/consequence score.
+            </p>
+          </div>
+          <div className="mt-3 grid gap-4 md:grid-cols-3">
+            <label className={labelClass}>
+              Review state
+              <select
+                className={inputClass}
+                value={draft.psychosocialReview.state}
+                onChange={(event) => {
+                  const state = event.target
+                    .value as RiskRecordV1["psychosocialReview"]["state"];
+                  update({
+                    psychosocialReview:
+                      state === "notIndicated"
+                        ? {
+                            state,
+                            hazards: [],
+                            exposure: null,
+                            basis: null,
+                            linkedRiskId: null,
+                            reviewedAt: null,
+                          }
+                        : {
+                            ...draft.psychosocialReview,
+                            state,
+                            exposure: draft.psychosocialReview.exposure ?? {
+                              frequency: "isolated",
+                              duration: "brief",
+                              severity: "moderate",
+                            },
+                            linkedRiskId:
+                              state === "material"
+                                ? draft.psychosocialReview.linkedRiskId
+                                : null,
+                          },
+                  });
+                }}
+              >
+                <option value="notIndicated">Not indicated</option>
+                <option value="consideration">Consideration</option>
+                <option value="material">Material risk</option>
+              </select>
+            </label>
+            {draft.psychosocialReview.state !== "notIndicated" ? (
+              <>
+                <label className={labelClass}>
+                  Frequency
+                  <select
+                    className={inputClass}
+                    value={draft.psychosocialReview.exposure?.frequency}
+                    onChange={(event) =>
+                      updatePsychosocial({
+                        exposure: {
+                          frequency: event.target.value as NonNullable<
+                            RiskRecordV1["psychosocialReview"]["exposure"]
+                          >["frequency"],
+                          duration:
+                            draft.psychosocialReview.exposure?.duration ??
+                            "brief",
+                          severity:
+                            draft.psychosocialReview.exposure?.severity ??
+                            "moderate",
+                        },
+                      })
+                    }
+                  >
+                    <option value="isolated">Isolated</option>
+                    <option value="repeated">Repeated</option>
+                    <option value="ongoing">Ongoing</option>
+                  </select>
+                </label>
+                <label className={labelClass}>
+                  Duration
+                  <select
+                    className={inputClass}
+                    value={draft.psychosocialReview.exposure?.duration}
+                    onChange={(event) =>
+                      updatePsychosocial({
+                        exposure: {
+                          frequency:
+                            draft.psychosocialReview.exposure?.frequency ??
+                            "isolated",
+                          duration: event.target.value as NonNullable<
+                            RiskRecordV1["psychosocialReview"]["exposure"]
+                          >["duration"],
+                          severity:
+                            draft.psychosocialReview.exposure?.severity ??
+                            "moderate",
+                        },
+                      })
+                    }
+                  >
+                    <option value="brief">Brief</option>
+                    <option value="extended">Extended</option>
+                    <option value="prolonged">Prolonged</option>
+                  </select>
+                </label>
+                <label className={labelClass}>
+                  Severity
+                  <select
+                    className={inputClass}
+                    value={draft.psychosocialReview.exposure?.severity}
+                    onChange={(event) =>
+                      updatePsychosocial({
+                        exposure: {
+                          frequency:
+                            draft.psychosocialReview.exposure?.frequency ??
+                            "isolated",
+                          duration:
+                            draft.psychosocialReview.exposure?.duration ??
+                            "brief",
+                          severity: event.target.value as NonNullable<
+                            RiskRecordV1["psychosocialReview"]["exposure"]
+                          >["severity"],
+                        },
+                      })
+                    }
+                  >
+                    <option value="low">Low</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="high">High</option>
+                  </select>
+                </label>
+                <fieldset className="md:col-span-3">
+                  <legend className={labelClass}>Relevant hazards</legend>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {Object.entries(psychosocialHazardLabels).map(
+                      ([hazard, label]) => (
+                        <label
+                          className="flex items-start gap-2 text-xs"
+                          key={hazard}
+                        >
+                          <input
+                            className="mt-0.5"
+                            type="checkbox"
+                            checked={draft.psychosocialReview.hazards.includes(
+                              hazard as PsychosocialHazard,
+                            )}
+                            onChange={(event) =>
+                              updatePsychosocial({
+                                hazards: event.target.checked
+                                  ? [
+                                      ...draft.psychosocialReview.hazards,
+                                      hazard as PsychosocialHazard,
+                                    ]
+                                  : draft.psychosocialReview.hazards.filter(
+                                      (item) => item !== hazard,
+                                    ),
+                              })
+                            }
+                          />
+                          {label}
+                        </label>
+                      ),
+                    )}
+                  </div>
+                </fieldset>
+                <label className={`${labelClass} md:col-span-3`}>
+                  Review basis
+                  <textarea
+                    className={inputClass}
+                    spellCheck
+                    value={draft.psychosocialReview.basis ?? ""}
+                    onChange={(event) =>
+                      updatePsychosocial({
+                        basis: event.target.value || null,
+                      })
+                    }
+                  />
+                </label>
+                {draft.psychosocialReview.state === "material" ? (
+                  <label className={`${labelClass} md:col-span-3`}>
+                    Linked personnel risk ID (optional)
+                    <input
+                      className={inputClass}
+                      value={draft.psychosocialReview.linkedRiskId ?? ""}
+                      onChange={(event) =>
+                        updatePsychosocial({
+                          linkedRiskId: event.target.value || null,
+                        })
+                      }
+                    />
+                  </label>
+                ) : null}
+              </>
+            ) : null}
           </div>
         </section>
         <div className="mt-5 grid gap-4 md:grid-cols-3">

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useIdentityQuery } from "@/shared/api/hooks";
 import { exportRiskRegister } from "@/shared/api/tauriRisk";
+import { useBattleRhythmQuery } from "@/features/battle-rhythm/hooks";
 import { usePlansQuery } from "@/features/plans/hooks";
 import { useRiskMutations, useRiskRegisterQuery } from "../hooks";
 import type { RiskDomain, RiskRecordV1, RiskStatus } from "../domain/contracts";
@@ -21,6 +22,11 @@ import {
   createRiskFromConstraint,
   summarizeRisks,
 } from "../domain/riskPresentation";
+import {
+  createRiskFromPsychosocialSuggestion,
+  psychosocialHazardLabels,
+  suggestPsychosocialReviews,
+} from "../domain/psychosocialReview";
 import { AuthorityProfileDialog } from "./AuthorityProfileDialog";
 import { RiskBadge, RiskMatrix } from "./RiskMatrix";
 import { RiskEditorDialog } from "./RiskEditorDialog";
@@ -41,6 +47,18 @@ export function RiskScreen({
   const identity = useIdentityQuery();
   const register = useRiskRegisterQuery(identity.data?.pubkey);
   const plans = usePlansQuery(identity.data?.pubkey);
+  const [screenNow] = React.useState(() => new Date().toISOString());
+  const battleRhythmRange = React.useMemo(
+    () => ({
+      start: new Date(Date.parse(screenNow) - 86_400_000).toISOString(),
+      end: new Date(Date.parse(screenNow) + 8 * 86_400_000).toISOString(),
+    }),
+    [screenNow],
+  );
+  const battleRhythm = useBattleRhythmQuery(
+    identity.data?.pubkey,
+    battleRhythmRange,
+  );
   const mutations = useRiskMutations(identity.data?.pubkey ?? "");
   const risks = register.data?.risks ?? [];
   const profile =
@@ -53,6 +71,7 @@ export function RiskScreen({
   const [status, setStatus] = React.useState<RiskStatus | "active" | "all">(
     "active",
   );
+  const [psychosocialOnly, setPsychosocialOnly] = React.useState(false);
   const [matrixCell, setMatrixCell] = React.useState<{
     likelihood: 1 | 2 | 3 | 4 | 5;
     consequence: "A" | "B" | "C" | "D" | "E";
@@ -92,6 +111,15 @@ export function RiskScreen({
   }, [initialConstraintId, plans.data, risks]);
   const today = new Date().toISOString().slice(0, 10);
   const summary = summarizeRisks(risks, profile, today);
+  const psychosocialSuggestions = React.useMemo(
+    () =>
+      suggestPsychosocialReviews(
+        battleRhythm.data?.revisions ?? [],
+        battleRhythm.data?.sources ?? [],
+        screenNow,
+      ).slice(0, 3),
+    [battleRhythm.data?.revisions, battleRhythm.data?.sources, screenNow],
+  );
   const visible = risks.filter((risk) => {
     const text =
       `${risk.title} ${risk.description} ${risk.owner} ${risk.scope.label}`.toLowerCase();
@@ -99,6 +127,8 @@ export function RiskScreen({
     if (domain !== "all" && risk.domain !== domain) return false;
     if (status === "active" && !activeStatuses.has(risk.status)) return false;
     if (status !== "all" && status !== "active" && risk.status !== status)
+      return false;
+    if (psychosocialOnly && risk.psychosocialReview.state === "notIndicated")
       return false;
     if (
       matrixCell &&
@@ -203,6 +233,55 @@ export function RiskScreen({
             value={summary.projectedControls}
           />
         </div>
+        {psychosocialSuggestions.length ? (
+          <section
+            className="mt-6 rounded-xl border border-primary/30 bg-card p-4"
+            data-testid="psychosocial-programme-review"
+          >
+            <div>
+              <h2 className="text-base font-semibold">
+                Programme change review
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Short-notice programme changes may warrant a psychosocial
+                review. Nothing is recorded until you save a risk.
+              </p>
+            </div>
+            <div className="mt-3 grid gap-2">
+              {psychosocialSuggestions.map((suggestion) => (
+                <div
+                  className="flex flex-wrap items-center justify-between gap-3 rounded border bg-background/50 p-3"
+                  key={suggestion.id}
+                >
+                  <div>
+                    <p className="text-sm font-medium">
+                      {suggestion.eventTitle}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {suggestion.sourceName} · {suggestion.changeKind} · due{" "}
+                      {suggestion.eventStart.slice(0, 10)}
+                    </p>
+                  </div>
+                  <button
+                    className="rounded border px-3 py-2 text-xs"
+                    onClick={() => {
+                      setEditing(
+                        createRiskFromPsychosocialSuggestion(
+                          suggestion,
+                          new Date().toISOString(),
+                        ),
+                      );
+                      setEditorOpen(true);
+                    }}
+                    type="button"
+                  >
+                    Review in risk editor
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
         <section className="mt-6 rounded-xl border bg-card p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
@@ -285,6 +364,14 @@ export function RiskScreen({
                 </option>
               ))}
             </select>
+            <label className="flex items-center gap-2 rounded border bg-background px-3 py-2 text-sm">
+              <input
+                type="checkbox"
+                checked={psychosocialOnly}
+                onChange={(event) => setPsychosocialOnly(event.target.checked)}
+              />
+              Psychosocial attention
+            </label>
           </div>
           {register.isLoading || plans.isLoading ? (
             <p className="p-6 text-sm text-muted-foreground">
@@ -331,6 +418,23 @@ export function RiskScreen({
                           <span className="mt-1 inline-block rounded bg-muted px-1.5 py-0.5 text-2xs uppercase">
                             {risk.status}
                           </span>
+                          {risk.psychosocialReview.state !== "notIndicated" ? (
+                            <span className="ml-1 mt-1 inline-block rounded bg-primary/15 px-1.5 py-0.5 text-2xs text-primary">
+                              Psychosocial:{" "}
+                              {risk.psychosocialReview.state === "material"
+                                ? "material"
+                                : "review"}
+                            </span>
+                          ) : null}
+                          {risk.psychosocialReview.state !== "notIndicated" ? (
+                            <p className="mt-1 line-clamp-1 text-2xs text-muted-foreground">
+                              {risk.psychosocialReview.hazards
+                                .map(
+                                  (hazard) => psychosocialHazardLabels[hazard],
+                                )
+                                .join(", ")}
+                            </p>
+                          ) : null}
                         </td>
                         <td className="p-3">
                           <div>{risk.owner}</div>

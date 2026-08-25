@@ -26,6 +26,11 @@ test("Risk creates and persists a command risk with controls and exports", async
   await dialog.getByLabel("Scope type").selectOption("activity");
   await dialog.getByLabel("Scope identifier").fill("seaboat-serial");
   await dialog.getByLabel("Scope label").fill("Seaboat serial");
+  await dialog.getByLabel("Review state").selectOption("consideration");
+  await dialog.getByLabel("Lack of role clarity").check();
+  await dialog
+    .getByLabel("Review basis")
+    .fill("Compressed preparation requires clear priorities and ownership.");
   await dialog.getByRole("button", { name: "Add control" }).click();
   await dialog
     .getByPlaceholder("Control")
@@ -35,6 +40,7 @@ test("Risk creates and persists a command risk with controls and exports", async
 
   await expect(screen.getByText("Seaboat davit unavailable")).toBeVisible();
   await expect(screen.getByText("Seaboat serial")).toBeVisible();
+  await expect(screen.getByText("Psychosocial: review")).toBeVisible();
   await expect(screen.getByText("1/1 implemented")).toHaveCount(0);
   await expect(screen.getByText("0/1 implemented")).toBeVisible();
   await screen.getByRole("button", { name: "Excel" }).click();
