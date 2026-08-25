@@ -124,6 +124,23 @@ test("does not suggest for timed, distant, or Shortcast changes", () => {
   );
 });
 
+test("treats a same-day all-day programme update as short notice", () => {
+  const sameDay = event({
+    id: "same-day",
+    start: "2026-08-25T00:00:00+10:00",
+    end: "2026-08-26T00:00:00+10:00",
+  });
+
+  assert.equal(
+    suggestPsychosocialReviews(
+      [revision({ kind: "changed", before: event(), after: sameDay })],
+      [source()],
+      "2026-08-25T10:00:00+10:00",
+    ).length,
+    1,
+  );
+});
+
 test("creates an unsaved review draft without changing the ADFP assessment", () => {
   const [suggestion] = suggestPsychosocialReviews(
     [revision({ kind: "added", after: event() })],

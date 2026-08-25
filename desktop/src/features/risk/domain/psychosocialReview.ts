@@ -88,7 +88,7 @@ export function suggestPsychosocialReviews(
         !event.allDay ||
         Number.isNaN(startMs) ||
         Number.isNaN(endMs) ||
-        noticeMs < 0 ||
+        noticeMs < -DAY_MS ||
         noticeMs > REVIEW_WINDOW_DAYS * DAY_MS ||
         endMs < nowMs - DAY_MS
       )
