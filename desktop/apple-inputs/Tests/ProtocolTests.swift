@@ -69,6 +69,19 @@ final class ProtocolTests: XCTestCase {
         XCTAssertThrowsError(try AppleInputRequest.decode(line: duplicate))
     }
 
+    func testDecodesCalendarReconciliationWithFractionalSecondTimestamps() throws {
+        let input = #"{"operation":"reconcile_calendar","arguments":{"coverage_start":"2026-01-01T00:00:00+11:00","coverage_end":"2028-01-01T00:00:00+11:00","projections":[{"external_id":"battle-rhythm:brief","title":"Navigation brief","start":"2026-08-23T23:00:00.000Z","end":"2026-08-24T00:00:00.000Z","is_all_day":false,"location":"Bridge","notes":null}]}}"#
+
+        let request = try AppleInputRequest.decode(line: input)
+        guard case .reconcileCalendar(let payload) = request.payload else {
+            return XCTFail("wrong payload")
+        }
+
+        XCTAssertEqual(payload.projections.count, 1)
+        XCTAssertEqual(payload.projections[0].externalID, "battle-rhythm:brief")
+        XCTAssertLessThan(payload.projections[0].start, payload.projections[0].end)
+    }
+
     func testSubprocessRejectsMalformedAndOversizedLinesWithoutCrashing() throws {
         let malformed = try runHelper(input: "{bad}\n")
         XCTAssertTrue(malformed.contains(#""source":"protocol""#))
