@@ -9,12 +9,14 @@ export function MissionConstraintsPanel({
   schedule,
   onCreate,
   onEdit,
+  onPromoteRisk,
 }: {
   constraints: readonly MissionConstraint[];
   tasks: readonly PlanningTask[];
   schedule: readonly ScheduledTask[];
   onCreate: () => void;
   onEdit: (constraint: MissionConstraint) => void;
+  onPromoteRisk?: (constraint: MissionConstraint) => void;
 }) {
   const taskById = new Map(tasks.map((task) => [task.id, task]));
   const scheduleById = new Map(schedule.map((task) => [task.taskId, task]));
@@ -54,11 +56,9 @@ export function MissionConstraintsPanel({
               : undefined;
             const path = task ? scheduleById.get(task.id) : undefined;
             return (
-              <button
+              <div
                 className="rounded border p-3 text-left hover:bg-muted/40"
                 key={constraint.id}
-                onClick={() => onEdit(constraint)}
-                type="button"
               >
                 <div className="flex items-start gap-2">
                   <AlertTriangle
@@ -69,10 +69,16 @@ export function MissionConstraintsPanel({
                     }
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <strong className="text-sm">
-                        {constraint.description}
-                      </strong>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <button
+                        className="text-left"
+                        onClick={() => onEdit(constraint)}
+                        type="button"
+                      >
+                        <strong className="text-sm">
+                          {constraint.description}
+                        </strong>
+                      </button>
                       <span className="rounded bg-muted px-1.5 py-0.5 text-2xs uppercase">
                         {constraint.status}
                       </span>
@@ -85,9 +91,18 @@ export function MissionConstraintsPanel({
                           ? "Mission-critical constraint outside calculated path."
                           : ""}
                     </p>
+                    {constraint.status === "riskCandidate" && onPromoteRisk ? (
+                      <button
+                        className="mt-2 rounded border border-amber-500/50 px-2 py-1 text-xs text-amber-700 dark:text-amber-300"
+                        onClick={() => onPromoteRisk(constraint)}
+                        type="button"
+                      >
+                        Promote to Risk Register
+                      </button>
+                    ) : null}
                   </div>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>

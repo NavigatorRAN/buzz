@@ -896,6 +896,7 @@ export function AppShell() {
                         onSelectHome={() => void navigation.goHome()}
                         onSelectShip={() => void navigation.goShip()}
                         onSelectPlans={() => void navigation.goPlans()}
+                        onSelectRisk={() => void navigation.goRisk()}
                         onSelectProjects={() => void navigation.goProjects()}
                         onSelectPulse={() => void navigation.goPulse()}
                         onSelectSettings={handleOpenSettings}

@@ -136,6 +136,20 @@ export function useAppNavigation() {
     [commitNavigation],
   );
 
+  const goRisk = React.useCallback(
+    (options: NavigationBehavior & { constraintId?: string } = {}) =>
+      commitNavigation(
+        {
+          to: "/risk",
+          search: options.constraintId
+            ? { constraint: options.constraintId }
+            : {},
+        },
+        options,
+      ),
+    [commitNavigation],
+  );
+
   const goPlan = React.useCallback(
     (planId: string, options?: NavigationBehavior & { taskId?: string }) =>
       commitNavigation(
@@ -370,6 +384,7 @@ export function useAppNavigation() {
     goNewMessage,
     goPlan,
     goPlans,
+    goRisk,
     goProject,
     goProjects,
     goPulse,

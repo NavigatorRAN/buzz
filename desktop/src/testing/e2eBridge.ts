@@ -57,6 +57,8 @@ import {
   KIND_PROJECT_ANNOUNCEMENT,
   KIND_REPO_ANNOUNCEMENT,
   KIND_REPO_STATE,
+  KIND_RISK_AUTHORITY_PROFILE,
+  KIND_RISK_RECORD,
   KIND_STREAM_MESSAGE_EDIT,
   KIND_SYSTEM_MESSAGE,
   KIND_TEXT_NOTE,
@@ -9976,6 +9978,8 @@ function sendToMockSocket(args: {
           KIND_PLANNING_PLAYBOOK,
           KIND_PLANNING_TASK_EXECUTION,
           KIND_PLANNING_TASK_ARTIFACT,
+          KIND_RISK_RECORD,
+          KIND_RISK_AUTHORITY_PROFILE,
         ].includes(kind),
       )
     ) {
@@ -10133,6 +10137,8 @@ function sendToMockSocket(args: {
         KIND_PLANNING_PLAYBOOK,
         KIND_PLANNING_TASK_EXECUTION,
         KIND_PLANNING_TASK_ARTIFACT,
+        KIND_RISK_RECORD,
+        KIND_RISK_AUTHORITY_PROFILE,
       ].includes(event.kind)
     ) {
       const rejectionIndex =
@@ -12646,6 +12652,8 @@ export function maybeInstallE2eTauriMocks() {
       }
       case "export_team_snapshot":
         // Mimics the save-to-disk path: report success without a real dialog.
+        return true;
+      case "export_risk_register":
         return true;
       case "encode_team_snapshot_for_send": {
         // Return a minimal PNG-shaped payload so the send flow can proceed

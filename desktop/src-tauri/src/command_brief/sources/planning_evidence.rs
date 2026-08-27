@@ -10,7 +10,12 @@ use crate::app_state::AppState;
 use crate::relay::query_relay;
 use buzz_core_pkg::kind::{
     KIND_BATTLE_RHYTHM_EVENT, KIND_MISSION_CONSTRAINT, KIND_PLANNING_PROJECT, KIND_PLANNING_TASK,
+    KIND_RISK_RECORD,
 };
+
+mod psychosocial;
+
+use psychosocial::psychosocial_projection;
 
 const MAX_CONTENT_BYTES: usize = 64 * 1024;
 const MAX_TEXT_BYTES: usize = 4_096;
@@ -307,6 +312,89 @@ fn prepare_candidate(
                 format!("3:{severity_order}:{}", record.d_tag),
             )
         }
+        KIND_RISK_RECORD => {
+            let status = required_string(&value, "status").ok_or(())?;
+            if status == "closed" {
+                return Ok(None);
+            }
+            if !matches!(
+                status,
+                "open" | "treating" | "controlled" | "accepted" | "elevated"
+            ) {
+                return Err(());
+            }
+            let title = required_string(&value, "title").ok_or(())?;
+            let domain = required_string(&value, "domain").ok_or(())?;
+            let owner = required_string(&value, "owner").ok_or(())?;
+            let review_date = parse_date_field(&value, "reviewDate").ok_or(())?;
+            let scope_label = value
+                .get("scope")
+                .and_then(Value::as_object)
+                .and_then(|scope| scope.get("label"))
+                .and_then(Value::as_str)
+                .filter(|label| !label.trim().is_empty() && label.len() <= MAX_TEXT_BYTES)
+                .ok_or(())?;
+            let (inherent_index, inherent_level, _) =
+                risk_assessment(&value, "inherentAssessment")?;
+            let (residual_index, residual_level, residual_rank) =
+                risk_assessment(&value, "residualAssessment")?;
+            let controls = value
+                .get("controls")
+                .and_then(Value::as_array)
+                .filter(|controls| controls.len() <= 64)
+                .ok_or(())?;
+            let implemented_controls = controls
+                .iter()
+                .filter(|control| {
+                    control.get("status").and_then(Value::as_str) == Some("implemented")
+                })
+                .count();
+            let acceptance_state = value
+                .get("acceptance")
+                .and_then(Value::as_object)
+                .and_then(|acceptance| acceptance.get("state"))
+                .and_then(Value::as_str)
+                .ok_or(())?;
+            let residual_state = value
+                .get("residualAssessment")
+                .and_then(Value::as_object)
+                .and_then(|assessment| assessment.get("state"))
+                .and_then(Value::as_str)
+                .ok_or(())?;
+            let mut projection = json!({
+                "recordType": "operational_risk",
+                "id": id,
+                "title": title,
+                "domain": domain,
+                "owner": owner,
+                "scope": scope_label,
+                "status": status,
+                "inherentIndex": inherent_index,
+                "inherentLevel": inherent_level,
+                "residualIndex": residual_index,
+                "residualLevel": residual_level,
+                "residualState": residual_state,
+                "implementedControls": implemented_controls,
+                "totalControls": controls.len(),
+                "reviewDate": review_date,
+                "acceptanceState": acceptance_state,
+            });
+            if let Some((state, hazards)) = psychosocial_projection(&value)? {
+                let projection = projection.as_object_mut().ok_or(())?;
+                projection.insert("psychosocialState".to_string(), json!(state));
+                projection.insert("psychosocialHazards".to_string(), json!(hazards));
+            }
+            let quote = serde_json::to_string(&projection).map_err(|_| ())?;
+            if quote.len() > MAX_CONTENT_BYTES {
+                return Err(());
+            }
+            (
+                SourceKind::Plans,
+                "command_risks",
+                quote,
+                format!("3:{}:{review_date}:{}", 4 - residual_rank, record.d_tag),
+            )
+        }
         _ => return Err(()),
     };
     Ok(Some(PreparedCandidate {
@@ -327,6 +415,67 @@ fn prepare_candidate(
         },
         sort_key,
     }))
+}
+
+fn risk_assessment(value: &Value, key: &str) -> Result<(String, &'static str, usize), ()> {
+    let assessment = value.get(key).and_then(Value::as_object).ok_or(())?;
+    let likelihood = assessment
+        .get("likelihood")
+        .and_then(Value::as_u64)
+        .filter(|value| (1..=5).contains(value))
+        .ok_or(())?;
+    let consequence = assessment
+        .get("consequence")
+        .and_then(Value::as_str)
+        .filter(|value| matches!(*value, "A" | "B" | "C" | "D" | "E"))
+        .ok_or(())?;
+    let column = match consequence {
+        "A" => 0,
+        "B" => 1,
+        "C" => 2,
+        "D" => 3,
+        "E" => 4,
+        _ => return Err(()),
+    };
+    let rows: [[(&str, usize); 5]; 5] = [
+        [
+            ("veryLow", 0),
+            ("veryLow", 0),
+            ("veryLow", 0),
+            ("low", 1),
+            ("low", 1),
+        ],
+        [
+            ("veryLow", 0),
+            ("veryLow", 0),
+            ("low", 1),
+            ("medium", 2),
+            ("medium", 2),
+        ],
+        [
+            ("veryLow", 0),
+            ("low", 1),
+            ("medium", 2),
+            ("high", 3),
+            ("high", 3),
+        ],
+        [
+            ("low", 1),
+            ("medium", 2),
+            ("high", 3),
+            ("high", 3),
+            ("veryHigh", 4),
+        ],
+        [
+            ("low", 1),
+            ("medium", 2),
+            ("high", 3),
+            ("veryHigh", 4),
+            ("veryHigh", 4),
+        ],
+    ];
+    let (level, rank) = rows[(likelihood - 1) as usize][column];
+    Ok((format!("{consequence}{likelihood}"), level, rank))
 }
 
 fn parse_record_value(record: &RawPlanningEvent, owner_pubkey: &str) -> Option<Value> {
@@ -477,6 +626,11 @@ pub(crate) async fn load_planning_evidence(
             "kinds": [KIND_MISSION_CONSTRAINT],
             "authors": [owner_pubkey],
             "limit": 2000
+        }),
+        json!({
+            "kinds": [KIND_RISK_RECORD],
+            "authors": [owner_pubkey],
+            "limit": 5000
         }),
     ];
     let events = query_relay(state.inner(), &filters).await?;

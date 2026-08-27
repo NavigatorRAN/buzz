@@ -39,6 +39,13 @@ test("planning routes select Plans without selecting developer Projects", () => 
   });
 });
 
+test("risk route selects the command risk register", () => {
+  assert.deepEqual(deriveShellRoute("/risk"), {
+    selectedChannelId: null,
+    selectedView: "risk",
+  });
+});
+
 test("shouldBounceForChannelNotification_allowsTopLevelChannelMessages", () => {
   assert.equal(shouldBounceForChannelNotification([["h", "channel"]]), true);
 });
